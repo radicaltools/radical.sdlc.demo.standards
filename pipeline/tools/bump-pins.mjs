@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // A new version of this repository is out: proposes it to the repositories that pin it, each
 // in a pull request of its own, which their Gate reads against the new version. Nothing here
-// merges. The repository says who they are in .radical/pipeline.json.
+// merges. The repository says who they are in .github/pipeline.json.
 //
 //   node pipeline/tools/bump-pins.mjs <tag>        with GH_TOKEN, which can push to them
 import { execFileSync } from 'node:child_process'
@@ -35,7 +35,7 @@ if (import.meta.url === pathToFileURL(process.argv[1]).href) {
     console.error('Which tag, and is GH_TOKEN set?')
     process.exit(2)
   }
-  const { name, consumers } = JSON.parse(readFileSync('.radical/pipeline.json', 'utf8'))
+  const { name, consumers } = JSON.parse(readFileSync('.github/pipeline.json', 'utf8'))
   const repo = process.env.GITHUB_REPOSITORY
   for (const consumer of consumers) {
     const dir = mkdtempSync(join(tmpdir(), 'pin-'))

@@ -1,0 +1,29 @@
+name: Update pins
+
+# A reusable workflow of the company's pipeline. A repository calls it on its own schedule, and
+# it looks for new versions of what that repository depends on. Whoever made them knows nothing
+# of it: a new version is only a tag. Each one becomes a pull request, which the Gate reads
+# against that version. Nothing here merges. No AI runs here.
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  pins:
+    name: Propose new versions
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: The standards, at the version this repository pins
+        run: node tools/standards.mjs
+      - uses: ./.standards/.github/actions/setup
+      - name: Look for new versions
+        env:
+          GH_TOKEN: ${{ secrets.AGENT_TOKEN }}
+        run: node .standards/pipeline/tools/update-pins.mjs

@@ -9,7 +9,7 @@
 #
 # Asks for two secrets:
 #   CLAUDE_CODE_OAUTH_TOKEN  from `claude setup-token`
-#   AGENT_TOKEN              a fine-grained token on all three repositories, with Contents,
+#   AGENT_TOKEN              a fine-grained token on this repository, with Contents,
 #                            Pull requests, Issues and Workflows: read and write
 set -euo pipefail
 repo="$1"; check="$2"

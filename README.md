@@ -28,7 +28,7 @@ Violet holds the agents.
 sensors/                 what measures them, run in the repository of the system measured
 pipeline/tools/          what the workflows run: allow-lists, scope check, rounds, findings
 pipeline/skills/         the agents
-pipeline/callers/        the few lines a system calls the pipeline with
+pipeline/callers/        the few lines a repository calls the pipeline with
 .github/workflows/       the pipeline, as reusable workflows, and this repository's own gate
 ```
 
@@ -51,18 +51,25 @@ own pull request, in front of the team that can fix it.
 
 ## How a new version travels
 
-![A person tags the standards. Automation opens a pull request in the Warehouse and in the Shop that moves the pin, and the Gate of each checks that repository against the new version. Each team merges when it can. A tag of the Warehouse then does the same towards the Shop.](docs/new-version.svg)
+![A person tags the standards, and nothing runs. Every day the Warehouse and the Shop each look at the tags of what they depend on. A new one becomes a pull request in that repository, with what changed in the model, and its Gate checks the repository against the new version. Each team merges when it can. A tag of the Warehouse reaches the Shop the same way.](docs/new-version.svg)
+
+**This repository does not know who uses it.** There is no list of them anywhere, and a tag runs nothing here. A repository
+that depends on another declares it in its own `deps.json`, and looks for new versions itself.
 
 1. A change merges here and gets a tag, `v1.1.0`.
-2. [`release.yml`](.github/workflows/release.yml) opens a pull request in each system: the pin in its
-   `deps.json` moves, and so does the version in its workflows, which `tools/standards.mjs --check`
-   in its Gate keeps equal.
-3. Each system's Gate runs against the new version: the new decisions, the new sensors, the new
-   pipeline. Green means it holds. Red shows exactly which service does not, before anything merged.
-4. A person merges. The pins can differ for a while, so a team moves when it can. When the Shop reads
-   a Warehouse pinned at another version of the standards, its own pin wins, and the check says so.
+2. Every day, or by hand, [`update-pins.yml`](.github/workflows/update-pins.yml) runs in the Warehouse and in the Shop, each
+   on its own. It reads the tags of each repository in `deps.json`.
+3. A newer version becomes a pull request there: the pin in `deps.json` moves, and so does the version in its workflows,
+   which `tools/standards.mjs --check` in its Gate keeps equal. A newer tag moves the open pull request along.
+4. The text of the pull request says what changed in the model of the dependency, from `radical diff` between the two tags.
+   A decision whose text changed leaves the Gate green, because the Gate reads what is measured, so a person reads this.
+5. Each repository's Gate runs against the new version: the new decisions, the new sensors, the new pipeline. Green means it
+   holds. Red shows exactly which service does not, before anything merged.
+6. A person merges. The pins can differ for a while, so a team moves when it can. When the Shop reads a Warehouse pinned at
+   another version of the standards, its own pin wins, and the check says so.
 
-The Warehouse's tags work the same way towards the Shop, with its OpenAPI descriptions and images.
+The Warehouse's tags reach the Shop the same way, with its OpenAPI descriptions and images. The price is the wait, a day at
+most, and starting the workflow by hand ends it. GitHub stops the schedule of a public repository with no activity for 60 days.
 
 ## The pipeline
 
@@ -94,7 +101,7 @@ every time. The box that stands out is the Gate, the one required check.
 | [`nightly.yml`](.github/workflows/nightly.yml) | every night | sensors and fuzz no, explore agents yes | Measures, fuzzes on a random seed, explores, and proposes findings on one rolling branch. |
 | [`prepare-for-review.yml`](.github/workflows/prepare-for-review.yml) | the gate or the testing agent ending | no | With `AGENT_AUTOMATION`: merges a green proposal into its branch, marks a finished pull request ready for review. |
 | [`deploy.yml`](.github/workflows/deploy.yml) | a commit on main, a version tag | no | Starts the stack on the runner, smoke-tests it, then publishes the images. |
-| [`release-pins.yml`](.github/workflows/release-pins.yml) | a version tag | no | Opens the pull requests above. |
+| [`update-pins.yml`](.github/workflows/update-pins.yml) | every day, or by hand | no | Finds new versions of what the repository depends on, and opens a pull request for each. |
 
 How the agents are kept honest is the same as in
 [demo.1](https://github.com/radicaltools/radical.tools.sdlc.demo.1#how-the-agents-are-kept-honest): the model
@@ -110,8 +117,7 @@ an allow-list, and only someone with write access starts them.
 
 ## Set it up in your own account
 
-Fork all three, in this order, and rename `radicaltools` in `deps.json`, the workflows, `.radical/pipeline.json`
-and `docker-compose.yml`. Then, in each repository:
+Fork all three, in this order, and rename `radicaltools` in `deps.json`, the workflows and `docker-compose.yml`. Then, in each repository:
 
 ```bash
 npm ci
@@ -120,7 +126,8 @@ pipeline/setup-github.sh <owner>/<name> Gate       # here
 ```
 
 The script asks for `CLAUDE_CODE_OAUTH_TOKEN` (from `claude setup-token`) and `AGENT_TOKEN`, a fine-grained
-token on all three repositories with Contents, Pull requests, Issues and Workflows: read and write. Tag
+token on that repository alone with Contents, Pull requests, Issues and Workflows: read and write. No repository needs
+to write to another. Tag
 the standards first, and the Warehouse before the Shop, because the Shop's deploy runs the Warehouse's images.
 
 Those images are private, as a company's would be. After the Warehouse's first deploy, open the settings of its

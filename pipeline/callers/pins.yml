@@ -1,0 +1,19 @@
+name: Update pins
+
+# Every day, or by hand: a new version of what this repository depends on becomes a pull request.
+
+on:
+  schedule:
+    - cron: '15 3 * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: pins
+
+permissions:
+  contents: read
+
+jobs:
+  pins:
+    uses: radicaltools/radical.tools.sdlc.demo.2.standards/.github/workflows/update-pins.yml@v1.0.1
+    secrets: inherit
