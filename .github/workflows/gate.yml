@@ -1,0 +1,111 @@
+name: Gate
+
+# A reusable workflow of the company's pipeline. A system's repository calls it from a
+# file of a few lines, which holds the triggers and the permissions. The file runs in
+# that repository, on its checkout: its own code, and .standards/ at the version it pins.
+
+# The gate: the one required check, and the only thing that decides. It runs on
+# every pull request, those of agents and those into an agent's branch too.
+# No AI runs here: the same commit always gets the same answer.
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  gate:
+    name: Gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      BASE: ${{ github.base_ref || 'main' }}
+      SHA: ${{ github.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: The standards, at the version this repository pins
+        run: node tools/standards.mjs
+      - uses: ./.standards/.github/actions/setup
+      - name: The pipeline and the model name one version of the standards
+        run: node tools/standards.mjs --check
+      - run: npm run typecheck
+      - run: npm run test:reports
+      - name: What the model measures on a pull request
+        if: ${{ !cancelled() }}
+        run: npx radical sense run --trigger pull-request --out reports/metrics --context "commit=$SHA"
+      - name: Agents stayed in their scope
+        if: ${{ !cancelled() }}
+        run: node .standards/pipeline/tools/agent-scope.mjs "origin/$BASE"
+      - name: The code against the model
+        if: ${{ !cancelled() }}
+        run: |
+          status=0
+          npx radical check .radical/model --report reports --metrics reports/metrics --trigger pull-request --format github || status=$?
+          npx radical check .radical/model --report reports --metrics reports/metrics --trigger pull-request >> "$GITHUB_STEP_SUMMARY" || true
+          exit "$status"
+      - name: Keep the reports
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports
+          path: reports/
+          retention-days: 14
+
+  # Semi-automation (repository variable AGENT_AUTOMATION = true): a red gate on an
+  # agent's branch asks the coding agent to fix it, at most three times. This job
+  # runs no AI and does not change the verdict of the gate.
+  auto-fix:
+    name: Request a fix from the coding agent
+    needs: gate
+    if: >-
+      failure() && vars.AGENT_AUTOMATION == 'true' && github.event_name == 'pull_request' &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      (startsWith(github.head_ref, 'agent/') || startsWith(github.head_ref, 'agent-tests/'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      GH_TOKEN: ${{ secrets.AGENT_TOKEN }}
+      BASE: ${{ github.base_ref }}
+      HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+      PR: ${{ github.event.pull_request.number }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Label it, or give up
+        run: |
+          tries="$(git log --no-merges --author=radical-coding-agent --grep='^Fix:' --format=%h "origin/$BASE..$HEAD_SHA" | wc -l)"
+          if [ "$tries" -ge 3 ]; then
+            gh pr comment "$PR" --repo "$GITHUB_REPOSITORY" --body "The coding agent tried $tries times and the gate is still red. This one needs a person."
+          else
+            gh pr edit "$PR" --repo "$GITHUB_REPOSITORY" --add-label agent:fix
+          fi
+
+  model-changes:
+    name: Comment the model changes
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      pull-requests: write
+    env:
+      BASE: ${{ github.base_ref }}
+      PR: ${{ github.event.pull_request.number }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: The standards, at the version this repository pins
+        run: node tools/standards.mjs
+      - uses: ./.standards/.github/actions/setup
+      - name: Say what changed in the model
+        run: |
+          if git diff --quiet "origin/$BASE...HEAD" -- .radical/model; then echo "The model did not change."; exit 0; fi
+          { echo '### Model changes'; echo; echo '```'; npx radical diff .radical/model --since "origin/$BASE"; echo '```'; } > model-changes.md
+          gh pr comment "$PR" --edit-last --create-if-none --body-file model-changes.md

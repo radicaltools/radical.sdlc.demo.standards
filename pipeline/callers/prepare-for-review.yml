@@ -1,0 +1,21 @@
+name: Prepare for review
+
+# Semi-automation, switched by the repository variable AGENT_AUTOMATION. Nothing here merges
+# into main. It runs the code of main, because it holds a token that can merge.
+
+on:
+  workflow_run:
+    workflows: [Pull request checks, Testing agent]
+    types: [completed]
+
+concurrency:
+  group: prepare-for-review-${{ github.event.workflow_run.head_branch }}
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  prepare:
+    uses: radicaltools/radical.tools.sdlc.demo.2.standards/.github/workflows/prepare-for-review.yml@v1.0.0
+    secrets: inherit

@@ -1,0 +1,30 @@
+name: Propose a release to the repositories that pin it
+
+# A version tag was pushed: each repository that pins this one gets a pull request with the
+# new version, and its Gate says whether it holds against it. Nothing here merges. No AI runs here.
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  pins:
+    name: Open the pull requests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - env:
+          GH_TOKEN: ${{ secrets.AGENT_TOKEN }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          tool=pipeline/tools/bump-pins.mjs
+          if [ ! -f "$tool" ]; then
+            node tools/standards.mjs
+            tool=".standards/$tool"
+          fi
+          node "$tool" "$TAG"

@@ -1,0 +1,112 @@
+name: Nightly
+
+# A reusable workflow of the company's pipeline. A system's repository calls it from a
+# file of a few lines, which holds the triggers and the permissions. The file runs in
+# that repository, on its checkout: its own code, and .standards/ at the version it pins.
+
+# What runs without anyone asking. The sensors measure against the last seven nights
+# (handed on as the artifact nightly-history, outside git), and each error of the check
+# becomes a finding. radical fuzz night --survey tries 2000 random sequences on a random
+# seed and records each new way a rule breaks as a finding, with the shortest sequence.
+# Then an exploratory round (radical explore, .standards/pipeline/tools/explore-round.mjs): an agent per area
+# looks for what no test describes, every finding is run again without it, and what still
+# shows goes into the findings. Everything new is proposed on one rolling branch,
+# bot/nightly-findings, so unmerged findings are kept and read by the next night instead
+# of being found again under new numbers.
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  night:
+    name: Measure, fuzz and explore
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: The standards, at the version this repository pins
+        run: node tools/standards.mjs
+      - uses: ./.standards/.github/actions/setup
+        with:
+          claude: 'true'
+      - name: Carry on the rolling branch
+        run: |
+          git config user.name radical-explore-agent
+          git config user.email radical-explore-agent@users.noreply.github.com
+          main="$(git rev-parse HEAD)"
+          if git fetch -q origin bot/nightly-findings 2>/dev/null; then
+            git checkout -q -B bot/nightly-findings FETCH_HEAD
+            git merge -q --no-edit "$main" || { git merge --abort; git checkout -q -B bot/nightly-findings "$main"; }
+          else
+            git checkout -q -B bot/nightly-findings
+          fi
+      - name: Fetch earlier nights
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_ID: ${{ github.run_id }}
+        run: |
+          mkdir -p history
+          for run in $(gh run list --repo "$GITHUB_REPOSITORY" --workflow nightly.yml --branch main --limit 10 --json databaseId,status -q '.[] | select(.status == "completed") | .databaseId'); do
+            [ "$run" = "$RUN_ID" ] && continue
+            if gh run download "$run" --repo "$GITHUB_REPOSITORY" --name nightly-history --dir history 2>/dev/null; then echo "From run $run"; break; fi
+          done
+          ls history
+      - name: Measure and check
+        env:
+          SHA: ${{ github.sha }}
+          RUN: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          npm run test:reports || true
+          npx radical sense run --trigger nightly --out reports/metrics --context "commit=$SHA" || true
+          npx radical fuzz night --survey || true
+          baseline=""
+          if ls history/*.json >/dev/null 2>&1; then baseline="--baseline history"; fi
+          mkdir -p .agent
+          status=0
+          npx radical check .radical/model --report reports --metrics reports/metrics $baseline --trigger nightly --format json > .agent/check.json || status=$?
+          # 1 is a check that found errors, which become findings; more is one that could not run.
+          [ "$status" -le 1 ]
+          node .standards/pipeline/tools/nightly-findings.mjs .agent/check.json .radical/crucible/findings --commit "$SHA" --run "$RUN"
+      - name: Hand on the last seven nights
+        env:
+          RUN_ID: ${{ github.run_id }}
+        run: |
+          night="$(date -u +%Y-%m-%dT%H%M)-$RUN_ID"
+          for f in reports/metrics/*.json; do [ -f "$f" ] && cp "$f" "history/${night}_$(basename "$f")"; done
+          ls history | sed 's/_.*//; s/\.json$//' | sort -u | head -n -7 | while read -r old; do rm -f "history/${old}"_*; done
+          mv history "$RUNNER_TEMP/history"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: nightly-history
+          path: ${{ runner.temp }}/history
+          if-no-files-found: ignore
+          retention-days: 90
+      - name: Exploratory round
+        env:
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          AGENT_MODEL: ${{ vars.AGENT_MODEL }}
+        run: node .standards/pipeline/tools/explore-round.mjs
+      - name: Commit the findings
+        id: commit
+        run: .standards/pipeline/tools/commit-as.sh explore-agent "Nightly findings $(date -u +%Y-%m-%d)"
+      - name: Propose them
+        env:
+          GH_TOKEN: ${{ secrets.AGENT_TOKEN }}
+          CHANGED: ${{ steps.commit.outputs.changed }}
+        run: |
+          if [ "$CHANGED" != "true" ]; then echo "No new findings."; exit 0; fi
+          git push "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" HEAD:refs/heads/bot/nightly-findings
+          if [ -z "$(gh pr list --repo "$GITHUB_REPOSITORY" --head bot/nightly-findings --state open --json number -q '.[0].number')" ]; then
+            gh pr create --repo "$GITHUB_REPOSITORY" --base main --head bot/nightly-findings --title "Nightly findings" --body-file .agent/report.md
+          else
+            gh pr comment bot/nightly-findings --repo "$GITHUB_REPOSITORY" --body-file .agent/report.md
+          fi

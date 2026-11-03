@@ -1,0 +1,54 @@
+name: Deploy
+
+# A reusable workflow of the company's pipeline. A system's repository calls it from a
+# file of a few lines, which holds the triggers and the permissions. The file runs in
+# that repository, on its checkout: its own code, and .standards/ at the version it pins.
+
+# Every commit on main: the images are built, the stack starts on the runner as
+# a staging, the fitness functions triggered on deploy measure it, and only when
+# radical check passes on that are the images published to GHCR. The staging ends
+# with the run.
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  deploy:
+    name: Smoke-test and publish images
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment: staging
+    env:
+      SHA: ${{ github.sha }}
+      TAG: ${{ github.ref_type == 'tag' && github.ref_name || github.sha }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: The standards, at the version this repository pins
+        run: node tools/standards.mjs
+      - uses: ./.standards/.github/actions/setup
+      - run: npm run test:reports
+      - name: The versions of the other systems' images
+        run: node .standards/pipeline/tools/pins-env.mjs >> "$GITHUB_ENV"
+      - name: Start the stack
+        run: docker compose up --build --wait --wait-timeout 120
+      - name: Measure it
+        run: npx radical sense run --trigger deploy --out reports/metrics --context "commit=$SHA"
+      - name: Check it
+        run: npx radical check .radical/model --report reports --metrics reports/metrics --trigger deploy --format github
+      - name: Logs of a stack that failed
+        if: failure()
+        run: docker compose logs
+      - name: Publish the images
+        env:
+          TOKEN: ${{ github.token }}
+        run: |
+          echo "$TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+          # Only this repository's services: the other systems' images are theirs.
+          docker compose push $(node -p "require('./.radical/pipeline.json').services.join(' ')")
+      - name: Stop the stack
+        if: always()
+        run: docker compose down

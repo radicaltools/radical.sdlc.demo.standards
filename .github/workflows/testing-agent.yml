@@ -1,0 +1,98 @@
+name: Testing agent
+
+# A reusable workflow of the company's pipeline. A system's repository calls it from a
+# file of a few lines, which holds the triggers and the permissions. The file runs in
+# that repository, on its checkout: its own code, and .standards/ at the version it pins.
+
+# For each pull request that changes the model or a service: the agent proposes
+# the tests and sensors it lacks, on a branch agent-tests/<branch>, in a pull
+# request into that branch. It never gates: its proposal goes through the gate
+# like any other change, and a proposed test that fails stays red for a person
+# to read (see the label agent:fix in model-and-code.yml).
+#
+# The agent step holds only the Claude credential. The steps after it run no AI:
+# they commit under the agent's name and push with AGENT_TOKEN, because a push
+# made with GITHUB_TOKEN would start no gate.
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  # A merged proposal is a push to the branch, and it would start this agent on
+  # its own tests. .standards/pipeline/tools/prepare-for-review.mjs names those merges.
+  decide:
+    name: Skip a merged proposal
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      merged-proposal: ${{ steps.subject.outputs.merged-proposal }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - id: subject
+        run: |
+          case "$(git log -1 --format=%s)" in
+            "Merge proposal "*) echo "merged-proposal=true" >> "$GITHUB_OUTPUT" ;;
+            *) echo "merged-proposal=false" >> "$GITHUB_OUTPUT" ;;
+          esac
+
+  propose:
+    name: Propose tests
+    needs: decide
+    if: >-
+      needs.decide.outputs.merged-proposal != 'true' &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      !startsWith(github.head_ref, 'agent-tests/') &&
+      !startsWith(github.head_ref, 'bot/')
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: The standards, at the version this repository pins
+        run: node tools/standards.mjs
+      - uses: ./.standards/.github/actions/setup
+        with:
+          claude: 'true'
+      - name: Testing agent
+        env:
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          AGENT_MODEL: ${{ vars.AGENT_MODEL }}
+          BRANCH: ${{ github.head_ref }}
+          BASE: ${{ github.base_ref }}
+        run: |
+          git checkout -B "agent-tests/$BRANCH"
+          node .standards/pipeline/tools/run-agent.mjs testing-agent "base=origin/$BASE" "branch=$BRANCH"
+      - name: Commit what it proposes
+        id: commit
+        env:
+          BRANCH: ${{ github.head_ref }}
+        run: .standards/pipeline/tools/commit-as.sh testing-agent "Tests proposed for $BRANCH"
+      - name: Push and open the pull request
+        env:
+          GH_TOKEN: ${{ secrets.AGENT_TOKEN }}
+          CHANGED: ${{ steps.commit.outputs.changed }}
+          BRANCH: ${{ github.head_ref }}
+          PR: ${{ github.event.pull_request.number }}
+        run: |
+          if [ "$CHANGED" != "true" ]; then
+            gh pr comment "$PR" --repo "$GITHUB_REPOSITORY" --body-file .agent/report.md
+            exit 0
+          fi
+          git push --force "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "HEAD:refs/heads/agent-tests/$BRANCH"
+          proposal="$(gh pr list --repo "$GITHUB_REPOSITORY" --head "agent-tests/$BRANCH" --state open --json url -q '.[0].url')"
+          if [ -n "$proposal" ]; then
+            gh pr edit "$proposal" --repo "$GITHUB_REPOSITORY" --body-file .agent/report.md
+          else
+            proposal="$(gh pr create --repo "$GITHUB_REPOSITORY" --base "$BRANCH" --head "agent-tests/$BRANCH" --title "Tests proposed for $BRANCH" --body-file .agent/report.md)"
+          fi
+          gh pr comment "$PR" --repo "$GITHUB_REPOSITORY" --body "The testing agent proposes tests: $proposal. Its gate says whether they pass."

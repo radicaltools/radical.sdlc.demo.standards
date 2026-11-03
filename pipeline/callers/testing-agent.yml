@@ -1,0 +1,24 @@
+name: Testing agent
+
+# For each pull request that changes the model or a service: the agent proposes the tests
+# and sensors it lacks, in a pull request into that branch. It never gates.
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - '.radical/model/**'
+      - 'services/**'
+      - 'packages/**'
+
+concurrency:
+  group: testing-agent-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  agent:
+    uses: radicaltools/radical.tools.sdlc.demo.2.standards/.github/workflows/testing-agent.yml@v1.0.0
+    secrets: inherit

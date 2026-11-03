@@ -1,0 +1,31 @@
+name: Pull request checks
+
+# The gate of the standards themselves: the pipeline's own tests, the shared sensors' tests,
+# and the model. No AI runs here.
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  gate:
+    name: Gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
+      - run: npm run test:reports
+      - name: The model
+        run: |
+          status=0
+          npx radical check .radical/model --format github || status=$?
+          npx radical check .radical/model >> "$GITHUB_STEP_SUMMARY" || true
+          exit "$status"

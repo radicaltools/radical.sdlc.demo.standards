@@ -3,9 +3,19 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "engines": { "node": ">=20.11" },
+  "engines": {
+    "node": ">=20.11"
+  },
   "devDependencies": {
     "@radicaltools/cli": "0.3.2",
-    "@radicaltools/mcp": "0.3.2"
-  }
+    "@radicaltools/mcp": "0.3.2",
+    "tsx": "^4.20.6",
+    "vitest": "^4.1.4",
+    "yaml": "^2.8.0"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "test:reports": "vitest run --reporter=default --reporter=json --outputFile.json=reports/unit.json"
+  },
+  "description": "The company's standards in radical.tools.sdlc.demo.2: the decisions every system follows, how each is measured, and the delivery pipeline the systems share."
 }

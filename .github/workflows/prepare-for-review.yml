@@ -1,0 +1,40 @@
+name: Prepare for review
+
+# A reusable workflow of the company's pipeline. A system's repository calls it from a
+# file of a few lines, which holds the triggers and the permissions. The file runs in
+# that repository, on its checkout: its own code, and .standards/ at the version it pins.
+
+# Semi-automation, switched by the repository variable AGENT_AUTOMATION. After the
+# gate or the testing agent ends on an agent's branch, .standards/pipeline/tools/prepare-for-review.mjs merges a
+# green proposal into its branch, and marks a finished pull request ready for
+# review, unless the coding agent has model questions. Nothing here merges into main. No AI runs here. This runs the code of
+# main, never that of the pull request, because it holds a token that can merge.
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  prepare:
+    name: Merge proposed tests, mark ready
+    if: >-
+      vars.AGENT_AUTOMATION == 'true' &&
+      github.event.workflow_run.event == 'pull_request' &&
+      github.event.workflow_run.head_repository.full_name == github.repository &&
+      (startsWith(github.event.workflow_run.head_branch, 'agent/') ||
+       startsWith(github.event.workflow_run.head_branch, 'agent-tests/'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - run: node tools/standards.mjs
+      - env:
+          GH_TOKEN: ${{ secrets.AGENT_TOKEN }}
+          COMMENT_TOKEN: ${{ github.token }}
+          BRANCH: ${{ github.event.workflow_run.head_branch }}
+        run: node .standards/pipeline/tools/prepare-for-review.mjs "$BRANCH"

@@ -1,8 +1,8 @@
 {
   "sensors": {
     "boundaries": { "command": "node sensors/boundaries.mjs" },
-    "openapi": { "command": "node sensors/openapi.mjs" },
-    "idempotency": { "command": "node sensors/idempotency.mjs" },
+    "openapi": { "command": "npx tsx sensors/openapi.mjs" },
+    "idempotency": { "command": "npx tsx sensors/idempotency.mjs" },
     "fuzz": { "command": "node sensors/fuzz.mjs" }
   }
 }

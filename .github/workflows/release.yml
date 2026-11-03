@@ -1,0 +1,13 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: read
+
+jobs:
+  pins:
+    uses: ./.github/workflows/release-pins.yml
+    secrets: inherit

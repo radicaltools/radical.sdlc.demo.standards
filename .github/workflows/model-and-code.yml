@@ -1,0 +1,246 @@
+name: Model and coding agents
+
+# A reusable workflow of the company's pipeline. A system's repository calls it from a
+# file of a few lines, which holds the triggers and the permissions. The file runs in
+# that repository, on its checkout: its own code, and .standards/ at the version it pins.
+
+# Three ways in, all started by someone with rights on the repository:
+#   - an issue gets the label agent:implement: the model agent turns the ticket into a
+#     model change, then the coding agent implements what get_changes says, in a
+#     pull request that closes the issue;
+#   - a pull request gets the label agent:fix: the coding agent fixes the code on
+#     its branch (for example where a test proposed by the testing agent failed);
+#   - the workflow is started by hand on a finding: the model agent makes sure a
+#     scenario says it, then the coding agent writes a gated test and the fix.
+#
+# They are two runs that share nothing but the commit between them. The model
+# agent can write only the model. The coding agent cannot write the model, and on
+# a ticket it does not get the ticket: what the model does not say is not built.
+#
+# When the ticket does not settle something that changes what the system does, the
+# model agent asks: the workflow puts its questions on the issue and stops, with
+# nothing committed. The comment of a person with write access starts it again.
+#
+# The text of an issue is untrusted in a public repository. Only a ticket written by
+# someone with write access starts an agent, whoever gives the label: an author without
+# it could change the text after a person has read it. The text reaches the model agent
+# as a file, never in a script, and an agent holds only the Claude credential. The steps between and
+# after the agents run no AI: they commit under the agent's name and push with
+# AGENT_TOKEN.
+
+on:
+  workflow_call:
+    inputs:
+      finding:
+        description: The finding to fix (F-0001), when started by hand
+        type: string
+        required: false
+
+permissions:
+  contents: read
+
+jobs:
+  author:
+    name: Check the ticket's author
+    if: >-
+      (github.event_name == 'issues' && github.event.label.name == 'agent:implement') ||
+      (github.event_name == 'issue_comment' && !github.event.issue.pull_request &&
+       github.event.comment.user.type != 'Bot' && contains(github.event.issue.labels.*.name, 'agent:question'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      issues: write
+    outputs:
+      trusted: ${{ steps.check.outputs.trusted }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - run: node tools/standards.mjs
+      - id: check
+        env:
+          GH_TOKEN: ${{ github.token }}
+          AUTHOR: ${{ github.event.issue.user.login }}
+          COMMENTER: ${{ github.event.comment.user.login }}
+          ISSUE: ${{ github.event.issue.number }}
+        run: |
+          if [ -n "$COMMENTER" ]; then
+            # Runs of one issue wait for each other, so the label is read as it is now:
+            # the comment before this one may already have been the answer.
+            waiting="$(gh issue view "$ISSUE" --repo "$GITHUB_REPOSITORY" --json labels -q '[.labels[].name] | index("agent:question") != null')"
+            if [ "$waiting" != "true" ]; then echo "No agent is waiting for an answer."; exit 0; fi
+            if ! node .standards/pipeline/tools/questions.mjs trusted "$COMMENTER"; then echo "$COMMENTER has no write access, so this is no answer."; exit 0; fi
+          fi
+          if node .standards/pipeline/tools/questions.mjs trusted "$AUTHOR"; then
+            echo "trusted=true" >> "$GITHUB_OUTPUT"
+          else
+            gh issue comment "$ISSUE" --repo "$GITHUB_REPOSITORY" --body "An agent works only on a ticket written by someone with write access to this repository. To take this one up, copy it into a ticket of your own."
+            gh issue edit "$ISSUE" --repo "$GITHUB_REPOSITORY" --remove-label agent:implement
+          fi
+
+  code:
+    # What runs differs by the way in, so the name says which.
+    name: ${{ github.event_name == 'pull_request' && 'Coding agent, fixing the branch' || 'Model agent, then coding agent' }}
+    needs: author
+    if: >-
+      !cancelled() && (
+      (github.event_name == 'issues' && github.event.label.name == 'agent:implement' && needs.author.outputs.trusted == 'true') ||
+      (github.event_name == 'issue_comment' && needs.author.outputs.trusted == 'true') ||
+      (github.event_name == 'pull_request' && github.event.label.name == 'agent:fix' &&
+       github.event.pull_request.head.repo.full_name == github.repository) ||
+      github.event_name == 'workflow_dispatch')
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref || github.event.repository.default_branch }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: The standards, at the version this repository pins
+        run: node tools/standards.mjs
+      - uses: ./.standards/.github/actions/setup
+        with:
+          claude: 'true'
+      - name: Read the task
+        id: task
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EVENT: ${{ github.event_name }}
+          ISSUE: ${{ github.event.issue.number }}
+          ISSUE_TITLE: ${{ github.event.issue.title }}
+          ISSUE_BODY: ${{ github.event.issue.body }}
+          HEAD: ${{ github.head_ref }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+          FINDING: ${{ inputs.finding }}
+        run: |
+          mkdir -p .agent
+          case "$EVENT" in
+            issues|issue_comment)
+              rounds="$(node .standards/pipeline/tools/questions.mjs brief "$ISSUE" .agent/brief.md)"
+              { echo "rounds=$rounds"; echo "mode=change"; echo "branch=agent/issue-$ISSUE"; echo "title=$ISSUE_TITLE"; echo "source=issue-$ISSUE"; } >> "$GITHUB_OUTPUT" ;;
+            pull_request)
+              printf '# %s\n\n%s\n' "$PR_TITLE" "$PR_BODY" > .agent/brief.md
+              { echo "mode=fix"; echo "branch=$HEAD"; echo "title=Fix: $PR_TITLE"; } >> "$GITHUB_OUTPUT" ;;
+            workflow_dispatch)
+              case "$FINDING" in F-[0-9]*) ;; *) echo "::error::Not a finding: $FINDING"; exit 1 ;; esac
+              cp ".radical/crucible/findings/$FINDING.md" .agent/brief.md
+              { echo "mode=finding"; echo "branch=agent/fix-$FINDING"; echo "title=Fix $FINDING"; echo "source=$FINDING"; } >> "$GITHUB_OUTPUT" ;;
+          esac
+      - name: On its branch
+        env:
+          BRANCH: ${{ steps.task.outputs.branch }}
+        run: git checkout -B "$BRANCH"
+      - name: Model agent
+        if: steps.task.outputs.mode != 'fix'
+        env:
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          AGENT_MODEL: ${{ vars.AGENT_MODEL }}
+          SOURCE: ${{ steps.task.outputs.source }}
+        run: node .standards/pipeline/tools/run-agent.mjs model-agent brief=.agent/brief.md "source=$SOURCE" --report .agent/model-report.md
+      - name: Did it ask
+        id: asked
+        if: steps.task.outputs.mode == 'change'
+        run: |
+          if node .standards/pipeline/tools/questions.mjs has Questions .agent/model-report.md; then
+            git checkout -- .radical/model
+            git clean -fdq .radical/model
+            echo "asked=true" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Ask on the issue
+        if: steps.asked.outputs.asked == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ISSUE: ${{ github.event.issue.number }}
+          ROUNDS: ${{ steps.task.outputs.rounds }}
+        run: node .standards/pipeline/tools/questions.mjs ask "$ISSUE" .agent/model-report.md "$ROUNDS"
+      - name: Commit the model
+        id: model
+        if: steps.task.outputs.mode != 'fix' && steps.asked.outputs.asked != 'true'
+        env:
+          TITLE: ${{ steps.task.outputs.title }}
+        run: |
+          .standards/pipeline/tools/commit-as.sh model-agent "Model: $TITLE"
+      - name: Coding agent
+        if: steps.task.outputs.mode != 'change' || steps.model.outputs.changed == 'true'
+        env:
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          AGENT_MODEL: ${{ vars.AGENT_MODEL }}
+          MODE: ${{ steps.task.outputs.mode }}
+        run: |
+          case "$MODE" in
+            change)
+              rm -f .agent/brief.md
+              node .standards/pipeline/tools/run-agent.mjs coding-agent mode=implement base=origin/main ;;
+            fix)
+              node .standards/pipeline/tools/run-agent.mjs coding-agent mode=fix brief=.agent/brief.md ;;
+            finding)
+              node .standards/pipeline/tools/run-agent.mjs coding-agent mode=finding base=origin/main brief=.agent/brief.md ;;
+          esac
+      - name: Commit the code
+        id: commit
+        env:
+          TITLE: ${{ steps.task.outputs.title }}
+        run: .standards/pipeline/tools/commit-as.sh coding-agent "$TITLE"
+      - name: Hand the model questions back
+        id: handed
+        if: steps.task.outputs.mode == 'change' && steps.commit.outputs.changed != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ISSUE: ${{ github.event.issue.number }}
+          ROUNDS: ${{ steps.task.outputs.rounds }}
+        run: |
+          if node .standards/pipeline/tools/questions.mjs has "Model questions" .agent/report.md; then
+            node .standards/pipeline/tools/questions.mjs ask "$ISSUE" .agent/report.md "$ROUNDS"
+            echo "handed=true" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Push and open the pull request
+        if: steps.commit.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.AGENT_TOKEN }}
+          AUTOMATION: ${{ vars.AGENT_AUTOMATION }}
+          MODE: ${{ steps.task.outputs.mode }}
+          BRANCH: ${{ steps.task.outputs.branch }}
+          TITLE: ${{ steps.task.outputs.title }}
+          ISSUE: ${{ github.event.issue.number }}
+          PR: ${{ github.event.pull_request.number }}
+        run: |
+          remote="https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          if [ -f .agent/model-report.md ]; then
+            { cat .agent/model-report.md; echo; echo '---'; echo; cat .agent/report.md; } > .agent/pr.md
+            mv .agent/pr.md .agent/report.md
+          fi
+          if [ "$MODE" = "fix" ]; then
+            git push "$remote" "HEAD:refs/heads/$BRANCH"
+            gh pr comment "$PR" --repo "$GITHUB_REPOSITORY" --body-file .agent/report.md
+          else
+            git push --force "$remote" "HEAD:refs/heads/$BRANCH"
+            [ "$MODE" = "change" ] && printf '\n\nCloses #%s\n' "$ISSUE" >> .agent/report.md
+            # With AGENT_AUTOMATION it stays a draft until the agents are done (.standards/pipeline/tools/prepare-for-review.mjs).
+            draft=""
+            if [ "$AUTOMATION" = "true" ]; then draft="--draft"; fi
+            gh pr create --repo "$GITHUB_REPOSITORY" --base main --head "$BRANCH" --title "$TITLE" --body-file .agent/report.md $draft
+          fi
+      - name: Comment the outcome
+        if: ${{ !cancelled() }}
+        env:
+          GH_TOKEN: ${{ secrets.AGENT_TOKEN }}
+          MODE: ${{ steps.task.outputs.mode }}
+          CHANGED: ${{ steps.commit.outputs.changed }}
+          ASKED: ${{ steps.asked.outputs.asked || steps.handed.outputs.handed }}
+          ISSUE: ${{ github.event.issue.number }}
+          PR: ${{ github.event.pull_request.number }}
+          RUN: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          if [ "$MODE" = "fix" ]; then gh pr edit "$PR" --repo "$GITHUB_REPOSITORY" --remove-label agent:fix; fi
+          target="${ISSUE:-$PR}"
+          if [ -n "$target" ] && [ "$CHANGED" != "true" ] && [ "$ASKED" != "true" ]; then
+            gh api "repos/$GITHUB_REPOSITORY/issues/$target/comments" -f body="The agents proposed nothing, so no pull request was opened: $RUN"
+          fi

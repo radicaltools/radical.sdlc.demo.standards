@@ -1,0 +1,32 @@
+name: Model and coding agents
+
+# Three ways in, all started by someone with rights on the repository: the label
+# agent:implement on an issue (and an answer to the agents' questions), the label
+# agent:fix on a pull request, or by hand on a finding.
+
+on:
+  issues:
+    types: [labeled]
+  issue_comment:
+    types: [created]
+  pull_request:
+    types: [labeled]
+  workflow_dispatch:
+    inputs:
+      finding:
+        description: The finding to fix (F-0001)
+        required: true
+
+concurrency:
+  group: coding-agent-${{ github.event.issue.number || github.event.pull_request.number || inputs.finding }}
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  agents:
+    uses: radicaltools/radical.tools.sdlc.demo.2.standards/.github/workflows/model-and-code.yml@v1.0.0
+    secrets: inherit
+    with:
+      finding: ${{ inputs.finding }}

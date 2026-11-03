@@ -1,0 +1,20 @@
+name: Pull request checks
+
+# The Gate of the company's pipeline: the one required check. No AI runs in it.
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  checks:
+    uses: radicaltools/radical.tools.sdlc.demo.2.standards/.github/workflows/gate.yml@v1.0.0
+    secrets: inherit
