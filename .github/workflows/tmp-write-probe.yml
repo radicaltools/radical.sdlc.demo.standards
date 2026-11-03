@@ -44,10 +44,28 @@ jobs:
               if m.get('type')=='system' and m.get('subtype')=='init':
                   print('INIT cwd',m.get('cwd'),'mode',m.get('permissionMode'))
           PY
-          npx radical explore prepare --runs 1 --areas "Pricing service: Quantity below one refused" --no-build | head -2
-          P=$(ls .radical/crucible/rounds/*/run-1/PROMPT.md)
-          for i in 1 2 3; do
-            echo "=== attempt $i"
-            claude -p "/explore-agent prompt=$P" --model claude-haiku-5-5 --max-turns 30 --mcp-config .mcp.json --strict-mcp-config --allowedTools Read Glob Grep mcp__radical__get_model_summary mcp__radical__search_model 'Bash(git log*)' 'Bash(node *)' 'Bash(ls *)' 'Edit(.radical/crucible/rounds/**)' 'Write(.radical/crucible/rounds/**)' --output-format stream-json --verbose > /tmp/out$i.jsonl || true
-            python3 /tmp/show.py /tmp/out$i.jsonl
-          done
+          mkdir -p /tmp/wrap /tmp/streams
+          REAL=$(command -v claude)
+          cat > /tmp/wrap/claude <<WRAP
+          #!/bin/sh
+          n=\$(ls /tmp/streams | wc -l)
+          args=""
+          for a in "\$@"; do :; done
+          python3 - "\$@" <<'PYW' > /tmp/args.txt
+          import sys,shlex
+          out=[]
+          skip=False
+          a=sys.argv[1:]
+          for i,x in enumerate(a):
+              if x=='json' and a[i-1]=='--output-format': out.append('stream-json'); continue
+              out.append(x)
+          print(' '.join(shlex.quote(x) for x in out+['--verbose']))
+          PYW
+          eval "$REAL \$(cat /tmp/args.txt)" > /tmp/streams/run\$n.jsonl
+          code=\$?
+          tail -n 1 /tmp/streams/run\$n.jsonl
+          exit \$code
+          WRAP
+          chmod +x /tmp/wrap/claude
+          PATH=/tmp/wrap:$PATH node .standards/pipeline/tools/explore-round.mjs 2>&1 | grep -E "^Refused|^explore-agent|NOT CHECKED|held up" | cut -c1-200 || true
+          for f in /tmp/streams/*.jsonl; do echo "=== $f"; python3 /tmp/show.py "$f"; done
