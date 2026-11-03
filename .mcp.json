@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "radical": {
+      "type": "stdio",
+      "command": "node",
+      "args": ["node_modules/@radicaltools/mcp/dist/index.js", "--folder", ".radical/model"]
+    }
+  }
+}

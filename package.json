@@ -1,0 +1,11 @@
+{
+  "name": "radical.tools.sdlc.demo.2.standards",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=20.11" },
+  "devDependencies": {
+    "@radicaltools/cli": "0.3.2",
+    "@radicaltools/mcp": "0.3.2"
+  }
+}

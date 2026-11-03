@@ -1,0 +1,122 @@
+[
+  {
+    "folder": "Decisions",
+    "id": "c2d599d6-1f9a-42c8-9ab5-fda6d20ecb81",
+    "kind": "table",
+    "name": "Standards",
+    "nodeIds": [],
+    "pipeline": {
+      "levels": [
+        {
+          "ways": [
+            {
+              "types": [
+                "adr"
+              ]
+            }
+          ]
+        },
+        {
+          "ways": [
+            {
+              "types": [
+                "fitness-fn"
+              ],
+              "via": {
+                "direction": "in",
+                "relationType": "implements"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "positions": {}
+  },
+  {
+    "folder": "Decisions",
+    "id": "cbbc0049-e877-4b5b-9002-765b91cc4918",
+    "kind": "table",
+    "name": "Fitness functions",
+    "nodeIds": [],
+    "pipeline": {
+      "levels": [
+        {
+          "ways": [
+            {
+              "types": [
+                "fitness-fn"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "positions": {}
+  },
+  {
+    "folder": "Decisions",
+    "id": "c29f3238-6346-40bc-9e82-b89920058a42",
+    "name": "Standards map",
+    "nodeIds": [
+      "af6ef5a8-e222-492d-8427-2fb929b3a8ea",
+      "b28e5aaa-5336-48ae-96f5-00023d2c6288",
+      "a76084a8-7513-4d57-b72d-183f5a52be8b",
+      "9e515080-0dc7-486c-8cd3-74cd74e090fe",
+      "dbf9b1ec-94ee-4906-87a4-8a1d140d77bd",
+      "0e7b8def-f0a4-49d2-892d-27a20fa4d56a",
+      "90d477d5-f2a7-4883-9860-05370e8a7e80",
+      "996b436b-319f-4973-b5f1-19eddcc2a631"
+    ],
+    "positions": {
+      "0e7b8def-f0a4-49d2-892d-27a20fa4d56a": {
+        "height": 52,
+        "width": 180,
+        "x": 1810,
+        "y": 0
+      },
+      "90d477d5-f2a7-4883-9860-05370e8a7e80": {
+        "height": 52,
+        "width": 180,
+        "x": 0,
+        "y": 0
+      },
+      "996b436b-319f-4973-b5f1-19eddcc2a631": {
+        "height": 52,
+        "width": 180,
+        "x": 250,
+        "y": 0
+      },
+      "9e515080-0dc7-486c-8cd3-74cd74e090fe": {
+        "height": 52,
+        "width": 180,
+        "x": 1300,
+        "y": 0
+      },
+      "a76084a8-7513-4d57-b72d-183f5a52be8b": {
+        "height": 52,
+        "width": 180,
+        "x": 1550,
+        "y": 0
+      },
+      "af6ef5a8-e222-492d-8427-2fb929b3a8ea": {
+        "height": 52,
+        "width": 180,
+        "x": 759,
+        "y": 0
+      },
+      "b28e5aaa-5336-48ae-96f5-00023d2c6288": {
+        "height": 52,
+        "width": 180,
+        "x": 510,
+        "y": 0
+      },
+      "dbf9b1ec-94ee-4906-87a4-8a1d140d77bd": {
+        "height": 52,
+        "width": 180,
+        "x": 2059,
+        "y": 0
+      }
+    }
+  }
+]

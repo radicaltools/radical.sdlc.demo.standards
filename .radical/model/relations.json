@@ -1,0 +1,26 @@
+[
+  {
+    "id": "1b62714d-c077-4d34-bd6f-1c641effded4",
+    "relationType": "implements",
+    "sourceId": "a76084a8-7513-4d57-b72d-183f5a52be8b",
+    "targetId": "9e515080-0dc7-486c-8cd3-74cd74e090fe"
+  },
+  {
+    "id": "58e491df-d6ab-4311-b455-d8098d8fb92a",
+    "relationType": "implements",
+    "sourceId": "af6ef5a8-e222-492d-8427-2fb929b3a8ea",
+    "targetId": "b28e5aaa-5336-48ae-96f5-00023d2c6288"
+  },
+  {
+    "id": "c2e18f71-c97e-41c2-b1b4-0088c0e24c50",
+    "relationType": "implements",
+    "sourceId": "90d477d5-f2a7-4883-9860-05370e8a7e80",
+    "targetId": "996b436b-319f-4973-b5f1-19eddcc2a631"
+  },
+  {
+    "id": "d82b915a-d9f3-4f43-9c8b-8407f940e6c1",
+    "relationType": "implements",
+    "sourceId": "dbf9b1ec-94ee-4906-87a4-8a1d140d77bd",
+    "targetId": "0e7b8def-f0a4-49d2-892d-27a20fa4d56a"
+  }
+]

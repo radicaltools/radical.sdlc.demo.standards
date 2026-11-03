@@ -1,0 +1,30 @@
+{
+  "rules": {
+    "metamodel": "error",
+    "stale-reference": "error",
+    "requirement-incomplete": "error",
+    "requirement-unsatisfied": "error",
+    "requirement-without-origin": "error",
+    "scenario-verifies-nothing": "error",
+    "adr-incomplete": "error",
+    "fitness-fn-unlinked": "error",
+    "metric-invalid": "error",
+    "requirement-without-scenario": "error",
+    "adr-without-fitness-fn": {
+      "severity": "error",
+      "max": 0
+    },
+    "scenario-not-verified-here": {
+      "severity": "warning"
+    },
+    "concern-unaddressed": "off"
+  },
+  "goals": {
+    "requirements-verified": {
+      "min": 70
+    },
+    "tests-bound": {
+      "min": 100
+    }
+  }
+}

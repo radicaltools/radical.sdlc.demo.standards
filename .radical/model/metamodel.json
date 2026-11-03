@@ -1,0 +1,3290 @@
+{
+  "id": "c4-ddd-governance-builtin",
+  "name": "Radical",
+  "nodeTypes": {
+    "person": {
+      "allowedAtRoot": true,
+      "allowedParents": [
+        "group"
+      ],
+      "builtin": true,
+      "collapsedHeight": 170,
+      "collapsedWidth": 150,
+      "color": "#08427b",
+      "description": "Someone who uses or runs the system: a customer, an operator, another team.",
+      "fg": "#fff",
+      "height": 170,
+      "iconPath": "M8 2a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5ZM3 12.5C3 10.01 5.24 8 8 8s5 2.01 5 4.5V14H3v-1.5Z",
+      "id": "person",
+      "label": "Person",
+      "layout": {
+        "role": "actor",
+        "side": "top"
+      },
+      "properties": [
+        {
+          "key": "description",
+          "label": "Description",
+          "type": "textarea"
+        },
+        {
+          "key": "external",
+          "label": "External",
+          "type": "boolean"
+        }
+      ],
+      "width": 150
+    },
+    "system": {
+      "allowedAtRoot": true,
+      "allowedParents": [
+        "system",
+        "domain",
+        "group"
+      ],
+      "builtin": true,
+      "collapsedHeight": 180,
+      "collapsedWidth": 280,
+      "color": "#1168bd",
+      "description": "Something that delivers value to its users and is owned by one team: yours, or one you depend on.",
+      "fg": "#fff",
+      "height": 260,
+      "iconPath": "M2 3.5A1.5 1.5 0 0 1 3.5 2h9A1.5 1.5 0 0 1 14 3.5v9a1.5 1.5 0 0 1-1.5 1.5h-9A1.5 1.5 0 0 1 2 12.5v-9ZM4 5h8v1H4V5Zm0 2.5h8v1H4v-1Zm0 2.5h5v1H4V10Z",
+      "id": "system",
+      "label": "Software System",
+      "properties": [
+        {
+          "key": "description",
+          "label": "Description",
+          "type": "textarea"
+        },
+        {
+          "key": "external",
+          "label": "External",
+          "type": "boolean"
+        }
+      ],
+      "width": 360
+    },
+    "container": {
+      "allowedAtRoot": false,
+      "allowedParents": [
+        "system",
+        "group"
+      ],
+      "builtin": true,
+      "collapsedHeight": 160,
+      "collapsedWidth": 240,
+      "color": "#438dd5",
+      "description": "Something that runs or stores data and is deployed on its own: a service, a worker, a mobile app, a serverless function.",
+      "fg": "#fff",
+      "height": 200,
+      "iconPath": "M1 4a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v1H1V4Zm0 2.5h14V12a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V6.5ZM3 3a.5.5 0 1 0 0 1 .5.5 0 0 0 0-1Zm2 0a.5.5 0 1 0 0 1 .5.5 0 0 0 0-1Z",
+      "id": "container",
+      "label": "Container",
+      "properties": [
+        {
+          "key": "description",
+          "label": "Description",
+          "type": "textarea"
+        },
+        {
+          "key": "technology",
+          "label": "Technology",
+          "type": "text"
+        },
+        {
+          "key": "external",
+          "label": "External",
+          "type": "boolean"
+        }
+      ],
+      "width": 300
+    },
+    "component": {
+      "allowedAtRoot": false,
+      "allowedParents": [
+        "container",
+        "webapp",
+        "group"
+      ],
+      "builtin": true,
+      "collapsedHeight": 120,
+      "collapsedWidth": 200,
+      "color": "#85bbf0",
+      "description": "A part of a container behind a clear interface: a controller, a domain service, an adapter.",
+      "fg": "#000",
+      "height": 120,
+      "iconPath": "M5 1v2H3a1 1 0 0 0-1 1v2h2v2H2v2h2v2H2v2a1 1 0 0 0 1 1h2v2h2v-2h2v2h2v-2h2a1 1 0 0 0 1-1v-2h-2v-2h2V8h-2V6h2V4a1 1 0 0 0-1-1h-2V1H9v2H7V1H5Z",
+      "id": "component",
+      "label": "Component",
+      "properties": [
+        {
+          "key": "description",
+          "label": "Description",
+          "type": "textarea"
+        },
+        {
+          "key": "technology",
+          "label": "Technology",
+          "type": "text"
+        },
+        {
+          "key": "external",
+          "label": "External",
+          "type": "boolean"
+        }
+      ],
+      "width": 200
+    },
+    "database": {
+      "allowedAtRoot": false,
+      "allowedParents": [
+        "system",
+        "group"
+      ],
+      "builtin": true,
+      "collapsedHeight": 130,
+      "collapsedWidth": 190,
+      "color": "#438dd5",
+      "description": "A container that stores data. It never starts an interaction.",
+      "fg": "#fff",
+      "height": 130,
+      "iconPath": "M8 1C4.7 1 2 2.3 2 4v8c0 1.7 2.7 3 6 3s6-1.3 6-3V4c0-1.7-2.7-3-6-3ZM2 4c0 1.7 2.7 3 6 3s6-1.3 6-3",
+      "id": "database",
+      "label": "Database",
+      "layout": {
+        "role": "store",
+        "side": "right"
+      },
+      "properties": [
+        {
+          "key": "description",
+          "label": "Description",
+          "type": "textarea"
+        },
+        {
+          "key": "technology",
+          "label": "Technology",
+          "type": "text"
+        },
+        {
+          "key": "external",
+          "label": "External",
+          "type": "boolean"
+        }
+      ],
+      "width": 190
+    },
+    "webapp": {
+      "allowedAtRoot": false,
+      "allowedParents": [
+        "system",
+        "group"
+      ],
+      "builtin": true,
+      "collapsedHeight": 140,
+      "collapsedWidth": 210,
+      "color": "#438dd5",
+      "description": "A container that is a browser front end.",
+      "fg": "#fff",
+      "height": 140,
+      "iconPath": "M2 3a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3Zm1 2.5V13h10V5.5H3ZM4 3.5a.5.5 0 1 0 0 1 .5.5 0 0 0 0-1Zm1.5 0a.5.5 0 1 0 0 1 .5.5 0 0 0 0-1Zm1.5 0a.5.5 0 1 0 0 1 .5.5 0 0 0 0-1Z",
+      "id": "webapp",
+      "label": "Web App",
+      "properties": [
+        {
+          "key": "description",
+          "label": "Description",
+          "type": "textarea"
+        },
+        {
+          "key": "technology",
+          "label": "Technology",
+          "type": "text"
+        },
+        {
+          "key": "external",
+          "label": "External",
+          "type": "boolean"
+        }
+      ],
+      "width": 210
+    },
+    "queue": {
+      "allowedAtRoot": false,
+      "allowedParents": [
+        "system",
+        "group"
+      ],
+      "builtin": true,
+      "collapsedHeight": 95,
+      "collapsedWidth": 220,
+      "color": "#438dd5",
+      "description": "A container that carries messages between other containers.",
+      "fg": "#fff",
+      "height": 95,
+      "iconPath": "M4 3a3 2 0 1 0 0 4h8a3 2 0 1 0 0-4H4Zm-2 5.5a3 2 0 0 0 4 0v-1a3 2 0 0 1-4 0v1Zm10 0a3 2 0 0 0 4 0v-1a3 2 0 0 1-4 0v1Z",
+      "id": "queue",
+      "label": "Queue",
+      "layout": {
+        "role": "broker"
+      },
+      "properties": [
+        {
+          "key": "description",
+          "label": "Description",
+          "type": "textarea"
+        },
+        {
+          "key": "technology",
+          "label": "Technology",
+          "type": "text"
+        },
+        {
+          "key": "external",
+          "label": "External",
+          "type": "boolean"
+        }
+      ],
+      "width": 220
+    },
+    "group": {
+      "allowedAtRoot": true,
+      "allowedParents": [
+        "group",
+        "system"
+      ],
+      "builtin": true,
+      "collapsedHeight": 220,
+      "collapsedWidth": 360,
+      "color": "#64748b",
+      "description": "A labelled boundary with no meaning of its own: a team, a layer, a deployment zone.",
+      "fg": "#fff",
+      "height": 360,
+      "iconPath": "M2 3.5C2 2.67 2.67 2 3.5 2H7l1.5 2h4c.83 0 1.5.67 1.5 1.5v7c0 .83-.67 1.5-1.5 1.5h-9C2.67 14 2 13.33 2 12.5v-9Z",
+      "id": "group",
+      "label": "Group",
+      "properties": [
+        {
+          "key": "description",
+          "label": "Description",
+          "type": "textarea"
+        }
+      ],
+      "width": 520
+    },
+    "domain": {
+      "allowedAtRoot": true,
+      "allowedParents": [
+        "domain",
+        "group"
+      ],
+      "builtin": true,
+      "collapsedHeight": 220,
+      "collapsedWidth": 360,
+      "color": "#4c1d95",
+      "description": "A part of the problem space, in the language of the business rather than of the software.",
+      "fg": "#fff",
+      "height": 360,
+      "iconPath": "M2 3.5A1.5 1.5 0 0 1 3.5 2h9A1.5 1.5 0 0 1 14 3.5v9a1.5 1.5 0 0 1-1.5 1.5h-9A1.5 1.5 0 0 1 2 12.5v-9Zm1.5 1A.5.5 0 0 0 3 5v6a.5.5 0 0 0 .5.5h9A.5.5 0 0 0 13 11V5a.5.5 0 0 0-.5-.5h-9ZM5 7h2v2H5V7Zm4 0h2v2H9V7Z",
+      "id": "domain",
+      "label": "Domain",
+      "layout": {
+        "role": "element"
+      },
+      "properties": [
+        {
+          "key": "description",
+          "label": "Description",
+          "type": "textarea"
+        },
+        {
+          "key": "vision",
+          "label": "Vision",
+          "type": "textarea"
+        },
+        {
+          "default": "core",
+          "key": "kind",
+          "label": "Kind",
+          "options": [
+            "core",
+            "supporting",
+            "generic"
+          ],
+          "type": "enum"
+        }
+      ],
+      "width": 520
+    },
+    "entity": {
+      "allowedAtRoot": true,
+      "allowedParents": [
+        "domain",
+        "group"
+      ],
+      "builtin": true,
+      "color": "#7e22ce",
+      "description": "A thing the domain keeps track of and that has an identity over time: a reservation, an order, a payment.",
+      "fg": "#fff",
+      "height": 56,
+      "hierarchyRelation": "part-of",
+      "iconPath": "M3 2.5A1.5 1.5 0 0 1 4.5 1h7A1.5 1.5 0 0 1 13 2.5v11a1.5 1.5 0 0 1-1.5 1.5h-7A1.5 1.5 0 0 1 3 13.5v-11ZM4.5 2a.5.5 0 0 0-.5.5V5h8V2.5a.5.5 0 0 0-.5-.5h-7ZM12 6H4v1.5h8V6Zm0 2.5H4V10h8V8.5Zm0 2.5H4v2.5c0 .28.22.5.5.5h7a.5.5 0 0 0 .5-.5V11Z",
+      "id": "entity",
+      "label": "Entity",
+      "layout": {
+        "role": "element"
+      },
+      "properties": [
+        {
+          "default": "aggregate-root",
+          "key": "kind",
+          "label": "Kind",
+          "options": [
+            "aggregate-root",
+            "entity"
+          ],
+          "type": "enum"
+        },
+        {
+          "key": "description",
+          "label": "Description",
+          "type": "textarea"
+        }
+      ],
+      "width": 170
+    },
+    "adr": {
+      "allowedAtRoot": true,
+      "allowedParents": [
+        "system",
+        "domain",
+        "group"
+      ],
+      "builtin": true,
+      "collapsedHeight": 52,
+      "collapsedWidth": 160,
+      "color": "#92400e",
+      "description": "An architecture decision record: the context of a decision, the decision itself, its consequences and the alternatives that were considered.",
+      "fg": "#fff",
+      "height": 52,
+      "iconPath": "M4.5 1C3.67 1 3 1.67 3 2.5v11c0 .83.67 1.5 1.5 1.5h7c.83 0 1.5-.67 1.5-1.5V6L9 1H4.5ZM9 2l3 3.5H9V2ZM5 8h6v1H5V8Zm0 2.5h6v1H5v-1Zm0 2.5h3.5v1H5V13Z",
+      "id": "adr",
+      "label": "ADR",
+      "layout": {
+        "role": "note",
+        "side": "left"
+      },
+      "properties": [
+        {
+          "default": "proposed",
+          "key": "status",
+          "label": "Status",
+          "options": [
+            "proposed",
+            "accepted",
+            "deprecated",
+            "superseded"
+          ],
+          "type": "enum"
+        },
+        {
+          "key": "date",
+          "label": "Date",
+          "type": "text"
+        },
+        {
+          "key": "context",
+          "label": "Context",
+          "type": "textarea"
+        },
+        {
+          "key": "decision",
+          "label": "Decision",
+          "type": "textarea"
+        },
+        {
+          "key": "consequences",
+          "label": "Consequences",
+          "type": "textarea"
+        },
+        {
+          "key": "alternatives",
+          "label": "Alternatives considered",
+          "type": "textarea"
+        },
+        {
+          "key": "concern",
+          "label": "Concern (Hub)",
+          "type": "text"
+        }
+      ],
+      "width": 180,
+      "wizard": {
+        "prefill": {
+          "date": "{{today}}",
+          "status": "proposed"
+        },
+        "steps": [
+          {
+            "fields": [
+              "label",
+              "status",
+              "date"
+            ],
+            "help": "Name the decision in a few words, e.g. \"Use PostgreSQL for order storage\".",
+            "kind": "fields",
+            "title": "Title & status"
+          },
+          {
+            "fields": [
+              "context"
+            ],
+            "help": "What forces are at play — the problem, constraints and drivers that make a decision necessary now?",
+            "kind": "fields",
+            "title": "Context"
+          },
+          {
+            "fields": [
+              "decision"
+            ],
+            "help": "What did you decide? State it actively: \"We will …\".",
+            "kind": "fields",
+            "title": "Decision"
+          },
+          {
+            "fields": [
+              "alternatives"
+            ],
+            "help": "Which other options did you consider, and why were they rejected?",
+            "kind": "fields",
+            "title": "Alternatives"
+          },
+          {
+            "fields": [
+              "consequences"
+            ],
+            "help": "What becomes easier or harder? Include the downsides and the risks you accept.",
+            "kind": "fields",
+            "title": "Consequences"
+          },
+          {
+            "direction": "out",
+            "help": "Which parts of the architecture must follow this decision?",
+            "kind": "relations",
+            "relationType": "constrains",
+            "title": "Affected elements"
+          },
+          {
+            "direction": "out",
+            "help": "Does this decision replace an earlier one? Leave empty if not.",
+            "kind": "relations",
+            "relationType": "supersedes",
+            "title": "Supersedes"
+          }
+        ],
+        "trigger": "create"
+      }
+    },
+    "fitness-fn": {
+      "allowedAtRoot": true,
+      "allowedParents": [
+        "system",
+        "domain",
+        "group"
+      ],
+      "builtin": true,
+      "collapsedHeight": 52,
+      "collapsedWidth": 160,
+      "color": "#5b21b6",
+      "description": "An objective, preferably automated check that the architecture still has a property it was designed for.",
+      "fg": "#fff",
+      "height": 52,
+      "iconPath": "M8 2a6 6 0 1 0 0 12A6 6 0 0 0 8 2Zm0 1.5a4.5 4.5 0 1 1 0 9 4.5 4.5 0 0 1 0-9ZM8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5Zm0 1a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3Z",
+      "id": "fitness-fn",
+      "label": "Fitness Function",
+      "layout": {
+        "role": "note",
+        "side": "left"
+      },
+      "properties": [
+        {
+          "key": "description",
+          "label": "Description",
+          "type": "textarea"
+        },
+        {
+          "key": "characteristic",
+          "label": "Characteristic (ISO/IEC 25010)",
+          "options": [
+            "functional-suitability",
+            "performance-efficiency",
+            "compatibility",
+            "interaction-capability",
+            "reliability",
+            "security",
+            "maintainability",
+            "flexibility",
+            "safety",
+            "other"
+          ],
+          "type": "enum"
+        },
+        {
+          "key": "scope",
+          "label": "Scope",
+          "options": [
+            "atomic",
+            "holistic"
+          ],
+          "type": "enum"
+        },
+        {
+          "key": "cadence",
+          "label": "Cadence",
+          "options": [
+            "triggered",
+            "continual",
+            "temporal"
+          ],
+          "type": "enum"
+        },
+        {
+          "key": "trigger",
+          "label": "Runs on",
+          "options": [
+            "pull-request",
+            "nightly",
+            "weekly",
+            "release",
+            "deploy"
+          ],
+          "type": "enum",
+          "visibleWhen": {
+            "key": "cadence",
+            "values": [
+              "triggered"
+            ]
+          }
+        },
+        {
+          "key": "every",
+          "label": "Every (e.g. 90d)",
+          "type": "text",
+          "visibleWhen": {
+            "key": "cadence",
+            "values": [
+              "temporal"
+            ]
+          }
+        },
+        {
+          "key": "invocation",
+          "label": "Invocation",
+          "options": [
+            "automated",
+            "manual"
+          ],
+          "type": "enum"
+        },
+        {
+          "key": "measure",
+          "label": "Measure (one per line: a sensor and its arguments)",
+          "type": "textarea",
+          "visibleWhen": {
+            "key": "invocation",
+            "values": [
+              "automated"
+            ]
+          }
+        },
+        {
+          "key": "metrics",
+          "label": "Metrics (one per line: metric{labels} <= value unit; tests are bound in .radical/radical.json)",
+          "type": "textarea"
+        },
+        {
+          "key": "combine",
+          "label": "Combine (all, any, at least N)",
+          "type": "text"
+        },
+        {
+          "key": "max_age",
+          "label": "Max age of a measurement (e.g. 7d)",
+          "type": "text"
+        }
+      ],
+      "width": 180,
+      "wizard": {
+        "steps": [
+          {
+            "fields": [
+              "label",
+              "characteristic",
+              "scope"
+            ],
+            "help": "Name what this function protects, e.g. \"Checkout p95 latency\", and the ISO/IEC 25010 characteristic it is part of. Atomic checks one part in one context (a unit test, a linter rule); holistic checks how several parts behave together (latency under load).",
+            "kind": "fields",
+            "title": "Name & characteristic"
+          },
+          {
+            "fields": [
+              "cadence",
+              "trigger",
+              "every",
+              "invocation"
+            ],
+            "help": "Triggered runs on an event (a pull request, every night, a release); continual runs all the time (monitoring in production); temporal falls due after a time (every 90 days). Manual means a person reviews it and records the result with radical sense review.",
+            "kind": "fields",
+            "title": "When it runs"
+          },
+          {
+            "fields": [
+              "description",
+              "measure"
+            ],
+            "help": "How is the characteristic measured? Measure names a sensor and its arguments, one per line, e.g. \"playwright tests/load.spec.ts --label env=staging\"; leave it empty for tests the pull-request gate already runs.",
+            "kind": "fields",
+            "title": "What it measures"
+          },
+          {
+            "fields": [
+              "metrics"
+            ],
+            "help": "When does it pass? One condition per line: a measured value and its threshold, e.g. \"checkout.latency.p95{env=prod} <= 300 ms\". The tests that check it are bound in the repository's .radical/radical.json (radical verify), not here.",
+            "kind": "fields",
+            "title": "Success criteria"
+          },
+          {
+            "direction": "out",
+            "help": "Which ADRs does this fitness function verify?",
+            "kind": "relations",
+            "relationType": "implements",
+            "title": "Verified decisions"
+          },
+          {
+            "direction": "out",
+            "help": "Which elements does it check?",
+            "kind": "relations",
+            "relationType": "constrains",
+            "title": "Guarded elements"
+          }
+        ],
+        "trigger": "create"
+      }
+    },
+    "need": {
+      "allowedAtRoot": true,
+      "allowedParents": [
+        "system",
+        "domain",
+        "group"
+      ],
+      "builtin": true,
+      "collapsedHeight": 80,
+      "collapsedWidth": 180,
+      "color": "#475569",
+      "description": "Raw input in the stakeholder's own words, kept verbatim: a brief, a user story, a note, a regulation.",
+      "fg": "#fff",
+      "height": 80,
+      "hierarchyRelation": "derives",
+      "iconPath": "M3 2a1.5 1.5 0 0 0-1.5 1.5v7A1.5 1.5 0 0 0 3 12h1.5v2.5L8 12h5a1.5 1.5 0 0 0 1.5-1.5v-7A1.5 1.5 0 0 0 13 2H3Zm1.5 3h7v1h-7V5Zm0 2.5h5v1h-5v-1Z",
+      "id": "need",
+      "label": "Need",
+      "layout": {
+        "role": "element"
+      },
+      "properties": [
+        {
+          "key": "description",
+          "label": "Text",
+          "type": "textarea"
+        },
+        {
+          "default": "brief",
+          "key": "kind",
+          "label": "Kind",
+          "options": [
+            "brief",
+            "user-story",
+            "stakeholder-note",
+            "meeting-notes",
+            "regulation",
+            "other"
+          ],
+          "type": "enum"
+        },
+        {
+          "key": "source",
+          "label": "Source (who / where from)",
+          "type": "text"
+        }
+      ],
+      "width": 200,
+      "wizard": {
+        "steps": [
+          {
+            "fields": [
+              "label",
+              "kind"
+            ],
+            "help": "A short name, e.g. \"Checkout brief from Sales\". Pick what kind of input it is.",
+            "kind": "fields",
+            "title": "Name & kind"
+          },
+          {
+            "fields": [
+              "description"
+            ],
+            "help": "Paste the input as-is — a brief, user story, notes or raw requirements. No format needed; Radical Forge or you can turn it into EARS requirements later.",
+            "kind": "fields",
+            "title": "Text"
+          },
+          {
+            "fields": [
+              "source"
+            ],
+            "help": "Who it came from or where it lives (a person, meeting, ticket or link).",
+            "kind": "fields",
+            "title": "Source"
+          },
+          {
+            "direction": "out",
+            "help": "Is this part of a broader need, e.g. one stakeholder's notes within a discovery? Leave empty if not.",
+            "kind": "relations",
+            "relationType": "derives",
+            "title": "Part of"
+          }
+        ],
+        "trigger": "create"
+      }
+    },
+    "requirement": {
+      "allowedAtRoot": true,
+      "allowedParents": [
+        "system",
+        "domain",
+        "group"
+      ],
+      "builtin": true,
+      "collapsedHeight": 80,
+      "collapsedWidth": 180,
+      "color": "#0e7490",
+      "description": "One thing the system shall do, written as an EARS sentence.",
+      "fg": "#fff",
+      "height": 80,
+      "hierarchyRelation": "derives",
+      "iconPath": "M5 1a1 1 0 0 0-1 1H3a1 1 0 0 0-1 1v11a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V3a1 1 0 0 0-1-1h-1a1 1 0 0 0-1-1H5Zm0 1h6v1H5V2ZM4 5.5h1.5v1.5H4V5.5Zm3 .25h5v1H7v-1ZM4 9h1.5v1.5H4V9Zm3 .25h5v1H7v-1Z",
+      "id": "requirement",
+      "label": "Requirement",
+      "layout": {
+        "role": "note",
+        "side": "left"
+      },
+      "properties": [
+        {
+          "default": "ubiquitous",
+          "key": "ears_type",
+          "label": "EARS type",
+          "options": [
+            "ubiquitous",
+            "event-driven",
+            "state-driven",
+            "unwanted-behaviour",
+            "optional",
+            "complex"
+          ],
+          "type": "enum"
+        },
+        {
+          "key": "trigger",
+          "label": "When (trigger)",
+          "type": "text",
+          "visibleWhen": {
+            "key": "ears_type",
+            "values": [
+              "event-driven",
+              "complex"
+            ]
+          }
+        },
+        {
+          "key": "precondition",
+          "label": "While (precondition)",
+          "type": "text",
+          "visibleWhen": {
+            "key": "ears_type",
+            "values": [
+              "state-driven",
+              "complex"
+            ]
+          }
+        },
+        {
+          "key": "precondition_state",
+          "label": "While in state",
+          "refType": "state",
+          "type": "ref",
+          "visibleWhen": {
+            "key": "ears_type",
+            "values": [
+              "state-driven",
+              "complex"
+            ]
+          }
+        },
+        {
+          "key": "unwanted_condition",
+          "label": "If (unwanted condition)",
+          "type": "text",
+          "visibleWhen": {
+            "key": "ears_type",
+            "values": [
+              "unwanted-behaviour",
+              "complex"
+            ]
+          }
+        },
+        {
+          "key": "feature",
+          "label": "Where (feature)",
+          "type": "text",
+          "visibleWhen": {
+            "key": "ears_type",
+            "values": [
+              "optional",
+              "complex"
+            ]
+          }
+        },
+        {
+          "key": "action",
+          "label": "The system shall (action)",
+          "type": "textarea"
+        },
+        {
+          "key": "rationale",
+          "label": "Rationale",
+          "type": "textarea"
+        }
+      ],
+      "width": 200,
+      "wizard": {
+        "steps": [
+          {
+            "fields": [
+              "label"
+            ],
+            "help": "A short name for the requirement, e.g. \"Lock account after failed logins\".",
+            "kind": "fields",
+            "title": "Name"
+          },
+          {
+            "component": "ears-quick-entry",
+            "help": "Type the requirement as one sentence and press Enter — the EARS fields are filled for you. Or skip and fill them in the next step.",
+            "kind": "custom",
+            "title": "Sentence"
+          },
+          {
+            "fields": [
+              "ears_type",
+              "trigger",
+              "precondition",
+              "precondition_state",
+              "unwanted_condition",
+              "feature",
+              "action"
+            ],
+            "help": "Pick the EARS pattern; only the clauses it uses are shown.",
+            "kind": "fields",
+            "title": "EARS fields"
+          },
+          {
+            "fields": [
+              "rationale"
+            ],
+            "help": "Why is this requirement needed? Who asked for it?",
+            "kind": "fields",
+            "title": "Rationale"
+          },
+          {
+            "direction": "in",
+            "help": "Which elements must satisfy this requirement?",
+            "kind": "relations",
+            "relationType": "satisfies",
+            "title": "Satisfied by"
+          },
+          {
+            "direction": "out",
+            "help": "Is this a refinement of a broader requirement, or derived from a need?",
+            "kind": "relations",
+            "relationType": "derives",
+            "title": "Derives from"
+          },
+          {
+            "direction": "out",
+            "help": "Which decisions or fitness functions follow from it?",
+            "kind": "relations",
+            "relationType": "traces-to",
+            "title": "Traces to"
+          }
+        ],
+        "trigger": "create"
+      }
+    },
+    "scenario": {
+      "allowedAtRoot": true,
+      "allowedParents": [
+        "system",
+        "domain",
+        "group"
+      ],
+      "builtin": true,
+      "collapsedHeight": 80,
+      "collapsedWidth": 180,
+      "color": "#166534",
+      "description": "An acceptance example in Gherkin: given a starting situation, when something happens, then the outcome.",
+      "fg": "#fff",
+      "height": 80,
+      "iconPath": "M3 2a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V3a1 1 0 0 0-1-1H3Zm3.5 2.5 5 3.5-5 3.5v-7Z",
+      "id": "scenario",
+      "label": "Scenario",
+      "layout": {
+        "role": "note",
+        "side": "left"
+      },
+      "properties": [
+        {
+          "key": "given",
+          "label": "Given",
+          "type": "textarea"
+        },
+        {
+          "key": "when",
+          "label": "When",
+          "type": "textarea"
+        },
+        {
+          "key": "then",
+          "label": "Then",
+          "type": "textarea"
+        },
+        {
+          "key": "gherkin",
+          "label": "Extra steps (And/But, raw Gherkin)",
+          "type": "textarea"
+        },
+        {
+          "key": "metrics",
+          "label": "Metrics (one per line: metric{labels} <= value unit; tests are bound in .radical/radical.json)",
+          "type": "textarea"
+        },
+        {
+          "key": "combine",
+          "label": "Combine (all, any, at least N)",
+          "type": "text"
+        },
+        {
+          "key": "max_age",
+          "label": "Max age of a measurement (e.g. 7d)",
+          "type": "text"
+        }
+      ],
+      "width": 200,
+      "wizard": {
+        "steps": [
+          {
+            "fields": [
+              "label"
+            ],
+            "help": "Name the behaviour, e.g. \"Card payment declined\".",
+            "kind": "fields",
+            "title": "Name"
+          },
+          {
+            "fields": [
+              "given"
+            ],
+            "help": "The starting state: who is involved and what is already true.",
+            "kind": "fields",
+            "title": "Given"
+          },
+          {
+            "fields": [
+              "when"
+            ],
+            "help": "The single action or event under test.",
+            "kind": "fields",
+            "title": "When"
+          },
+          {
+            "fields": [
+              "then",
+              "gherkin"
+            ],
+            "help": "The observable outcome. Add And/But steps below if needed.",
+            "kind": "fields",
+            "title": "Then"
+          },
+          {
+            "direction": "out",
+            "help": "Which requirements does this scenario verify?",
+            "kind": "relations",
+            "relationType": "verifies",
+            "title": "Verified requirements"
+          }
+        ],
+        "trigger": "create"
+      }
+    },
+    "blueprint": {
+      "allowedAtRoot": true,
+      "allowedParents": [
+        "domain",
+        "group"
+      ],
+      "builtin": true,
+      "collapsedHeight": 220,
+      "collapsedWidth": 360,
+      "color": "#1e3a5f",
+      "description": "A curated reference architecture imported from the Concept Hub.",
+      "fg": "#fff",
+      "height": 360,
+      "hubOnly": true,
+      "iconPath": "M2 2h12v12H2V2Zm1 1v2h2V3H3Zm3 0v2h2V3H6Zm3 0v2h2V3H9Zm3 0v2h1V3h-1ZM3 6v2h2V6H3Zm3 0v2h2V6H6Zm3 0v2h2V6H9Zm3 0v2h1V6h-1ZM3 9v2h2V9H3Zm3 0v2h2V9H6Zm3 0v2h2V9H9Zm3 0v2h1V9h-1ZM3 12v1h2v-1H3Zm3 0v1h2v-1H6Zm3 0v1h2v-1H9Zm3 0v1h1v-1h-1Z",
+      "id": "blueprint",
+      "label": "Blueprint",
+      "layout": {
+        "role": "element"
+      },
+      "properties": [
+        {
+          "key": "description",
+          "label": "Description",
+          "type": "textarea"
+        },
+        {
+          "default": "draft",
+          "key": "status",
+          "label": "Status",
+          "options": [
+            "draft",
+            "reviewed",
+            "approved",
+            "deprecated"
+          ],
+          "type": "enum"
+        },
+        {
+          "key": "domain",
+          "label": "Domain / Context",
+          "type": "text"
+        },
+        {
+          "key": "rationale",
+          "label": "Rationale",
+          "type": "textarea"
+        }
+      ],
+      "width": 520
+    },
+    "mockup": {
+      "allowedAtRoot": true,
+      "allowedParents": [
+        "system",
+        "domain",
+        "group"
+      ],
+      "builtin": true,
+      "collapsedHeight": 190,
+      "collapsedWidth": 220,
+      "color": "#be185d",
+      "description": "One screen of the product, optionally with a low-fi wireframe.",
+      "fg": "#fff",
+      "height": 190,
+      "iconPath": "M2 2.5A1.5 1.5 0 0 1 3.5 1h9A1.5 1.5 0 0 1 14 2.5v11a1.5 1.5 0 0 1-1.5 1.5h-9A1.5 1.5 0 0 1 2 13.5v-11ZM3 5v8.5c0 .28.22.5.5.5h9a.5.5 0 0 0 .5-.5V5H3Zm1 1.5h8v2H4v-2Zm0 3h3.5V13H4V9.5Zm4.5 0H12v1H8.5v-1Zm0 2H12v1H8.5v-1Z",
+      "id": "mockup",
+      "label": "Mockup",
+      "layout": {
+        "role": "screen"
+      },
+      "properties": [
+        {
+          "key": "description",
+          "label": "Description",
+          "type": "textarea"
+        },
+        {
+          "key": "screen",
+          "label": "Screen / route",
+          "type": "text"
+        },
+        {
+          "key": "link",
+          "label": "Design link",
+          "type": "text"
+        }
+      ],
+      "width": 220,
+      "wizard": {
+        "steps": [
+          {
+            "fields": [
+              "label",
+              "screen",
+              "description"
+            ],
+            "help": "Which screen is this, and what does the user do on it?",
+            "kind": "fields",
+            "title": "Screen"
+          },
+          {
+            "fields": [
+              "link"
+            ],
+            "help": "A Figma / Penpot link, if the design exists. You can generate a wireframe from the properties panel later.",
+            "kind": "fields",
+            "title": "Design link"
+          },
+          {
+            "direction": "out",
+            "help": "Which requirements or scenarios does this screen show?",
+            "kind": "relations",
+            "relationType": "illustrates",
+            "title": "Illustrates"
+          },
+          {
+            "direction": "out",
+            "help": "Which part of the system renders it?",
+            "kind": "relations",
+            "relationType": "presented-by",
+            "title": "Presented by"
+          }
+        ],
+        "trigger": "create"
+      }
+    },
+    "state-machine": {
+      "allowedAtRoot": true,
+      "allowedParents": [
+        "system",
+        "domain",
+        "group"
+      ],
+      "builtin": true,
+      "collapsedHeight": 64,
+      "collapsedWidth": 200,
+      "color": "#3730a3",
+      "description": "The lifecycle of one entity: the states it can be in and the transitions between them.",
+      "fg": "#fff",
+      "height": 380,
+      "iconPath": "M1 3.5A1.5 1.5 0 0 1 2.5 2h3A1.5 1.5 0 0 1 7 3.5v2A1.5 1.5 0 0 1 5.5 7h-3A1.5 1.5 0 0 1 1 5.5v-2Zm8 7A1.5 1.5 0 0 1 10.5 9h3a1.5 1.5 0 0 1 1.5 1.5v2a1.5 1.5 0 0 1-1.5 1.5h-3A1.5 1.5 0 0 1 9 12.5v-2ZM3.5 8h1v3h2.8v-1l2 1.5-2 1.5v-1H3.5V8Z",
+      "id": "state-machine",
+      "label": "State Machine",
+      "layout": {
+        "role": "element"
+      },
+      "properties": [
+        {
+          "key": "description",
+          "label": "Description",
+          "type": "textarea"
+        }
+      ],
+      "width": 560
+    },
+    "state": {
+      "allowedAtRoot": false,
+      "allowedParents": [
+        "state-machine",
+        "state"
+      ],
+      "builtin": true,
+      "collapsedHeight": 72,
+      "collapsedWidth": 170,
+      "color": "#4f46e5",
+      "description": "A situation the entity can be in.",
+      "fg": "#fff",
+      "height": 220,
+      "iconPath": "M3.5 3h9A2.5 2.5 0 0 1 15 5.5v5a2.5 2.5 0 0 1-2.5 2.5h-9A2.5 2.5 0 0 1 1 10.5v-5A2.5 2.5 0 0 1 3.5 3Zm0 1.5a1 1 0 0 0-1 1v5a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1v-5a1 1 0 0 0-1-1h-9Z",
+      "id": "state",
+      "label": "State",
+      "layout": {
+        "byProperty": {
+          "key": "kind",
+          "roles": {
+            "final": "end"
+          }
+        },
+        "role": "element"
+      },
+      "properties": [
+        {
+          "default": "normal",
+          "key": "kind",
+          "label": "Kind",
+          "options": [
+            "normal",
+            "parallel",
+            "final"
+          ],
+          "type": "enum"
+        },
+        {
+          "key": "entry",
+          "label": "Entry actions",
+          "type": "text",
+          "visibleWhen": {
+            "key": "kind",
+            "values": [
+              "normal",
+              "parallel"
+            ]
+          }
+        },
+        {
+          "key": "exit",
+          "label": "Exit actions",
+          "type": "text",
+          "visibleWhen": {
+            "key": "kind",
+            "values": [
+              "normal",
+              "parallel"
+            ]
+          }
+        },
+        {
+          "key": "do",
+          "label": "Do (ongoing activity)",
+          "type": "text",
+          "visibleWhen": {
+            "key": "kind",
+            "values": [
+              "normal"
+            ]
+          }
+        },
+        {
+          "key": "description",
+          "label": "Description",
+          "type": "textarea"
+        }
+      ],
+      "width": 320
+    },
+    "pseudostate": {
+      "allowedAtRoot": false,
+      "allowedParents": [
+        "state-machine",
+        "state"
+      ],
+      "builtin": true,
+      "color": "#1e1b4b",
+      "description": "A point a state machine passes through but never rests in: where it starts, a choice, a history.",
+      "fg": "#fff",
+      "height": 36,
+      "iconPath": "M8 4a4 4 0 1 1 0 8 4 4 0 0 1 0-8Z",
+      "id": "pseudostate",
+      "label": "Pseudostate",
+      "layout": {
+        "byProperty": {
+          "key": "kind",
+          "roles": {
+            "initial": "start"
+          }
+        },
+        "role": "element"
+      },
+      "properties": [
+        {
+          "default": "initial",
+          "key": "kind",
+          "label": "Kind",
+          "options": [
+            "initial",
+            "shallow-history",
+            "deep-history",
+            "choice"
+          ],
+          "type": "enum"
+        }
+      ],
+      "width": 36
+    },
+    "event": {
+      "allowedAtRoot": true,
+      "allowedParents": [
+        "state-machine",
+        "system",
+        "domain",
+        "group"
+      ],
+      "builtin": true,
+      "color": "#c2410c",
+      "description": "Something that happens and can trigger a transition.",
+      "fg": "#fff",
+      "height": 52,
+      "iconPath": "M9.5 1 3 9h4l-1 6 6.5-8h-4l1-6Z",
+      "id": "event",
+      "label": "Event",
+      "layout": {
+        "role": "note",
+        "side": "left"
+      },
+      "properties": [
+        {
+          "default": "external",
+          "key": "source",
+          "label": "Source",
+          "options": [
+            "external",
+            "internal",
+            "timer"
+          ],
+          "type": "enum"
+        },
+        {
+          "key": "payload",
+          "label": "Payload",
+          "type": "text"
+        },
+        {
+          "key": "description",
+          "label": "Description",
+          "type": "textarea"
+        }
+      ],
+      "width": 170
+    },
+    "process": {
+      "allowedAtRoot": true,
+      "allowedParents": [
+        "system",
+        "domain",
+        "group"
+      ],
+      "builtin": true,
+      "collapsedHeight": 64,
+      "collapsedWidth": 200,
+      "color": "#0f766e",
+      "description": "A procedure: the steps it is made of, what repeats and what is an alternative.",
+      "fg": "#fff",
+      "height": 160,
+      "iconPath": "M5 2c-1.1 0-2 .9-2 2v2.2c0 .5-.3.8-.8.8H1.5v2h.7c.5 0 .8.3.8.8V12c0 1.1.9 2 2 2h.5v-1.5H5c-.3 0-.5-.2-.5-.5V9.5c0-.9-.4-1.6-1-2 .6-.4 1-1.1 1-2V4c0-.3.2-.5.5-.5h.5V2H5Zm3 1.5h7V5H8V3.5Zm0 3.75h7v1.5H8v-1.5ZM8 11h7v1.5H8V11Z",
+      "id": "process",
+      "label": "Process",
+      "layout": {
+        "role": "element"
+      },
+      "properties": [
+        {
+          "key": "order",
+          "label": "Order",
+          "type": "number"
+        },
+        {
+          "default": "sequence",
+          "key": "children",
+          "label": "Children run",
+          "options": [
+            "sequence",
+            "choice",
+            "concurrent"
+          ],
+          "type": "enum"
+        },
+        {
+          "key": "description",
+          "label": "Description",
+          "type": "textarea"
+        }
+      ],
+      "width": 260
+    },
+    "step": {
+      "allowedAtRoot": false,
+      "allowedParents": [
+        "process",
+        "step"
+      ],
+      "builtin": true,
+      "collapsedHeight": 64,
+      "collapsedWidth": 180,
+      "color": "#14b8a6",
+      "description": "One part of a process, itself made of steps or not.",
+      "fg": "#042f2e",
+      "height": 80,
+      "iconPath": "M2 4.5A1.5 1.5 0 0 1 3.5 3h9A1.5 1.5 0 0 1 14 4.5v7a1.5 1.5 0 0 1-1.5 1.5h-9A1.5 1.5 0 0 1 2 11.5v-7Zm1.5 0v7h9v-7h-9Zm1 2.75h3.8V5.5L11 8l-2.7 2.5V8.75H4.5v-1.5Z",
+      "id": "step",
+      "label": "Step",
+      "layout": {
+        "role": "element"
+      },
+      "properties": [
+        {
+          "key": "order",
+          "label": "Order",
+          "type": "number"
+        },
+        {
+          "default": "1",
+          "key": "repeat",
+          "label": "Repeat",
+          "options": [
+            "1",
+            "0..1",
+            "1..n",
+            "0..n"
+          ],
+          "type": "enum"
+        },
+        {
+          "key": "condition",
+          "label": "Condition (for each…, while…, if…)",
+          "type": "text"
+        },
+        {
+          "default": "sequence",
+          "key": "children",
+          "label": "Children run",
+          "options": [
+            "sequence",
+            "choice",
+            "concurrent"
+          ],
+          "type": "enum"
+        },
+        {
+          "key": "description",
+          "label": "Description",
+          "type": "textarea"
+        }
+      ],
+      "width": 220
+    }
+  },
+  "relationTypes": {
+    "interacts": {
+      "allowedPairs": [
+        {
+          "forwardLabel": "Interacts with",
+          "from": "person",
+          "inverseLabel": "Interacts with",
+          "to": "person"
+        },
+        {
+          "from": "person",
+          "to": "system"
+        },
+        {
+          "from": "person",
+          "to": "container"
+        },
+        {
+          "from": "person",
+          "to": "webapp"
+        },
+        {
+          "from": "person",
+          "to": "component"
+        },
+        {
+          "forwardLabel": "Delivers to",
+          "from": "system",
+          "inverseLabel": "Receives from",
+          "to": "person"
+        },
+        {
+          "from": "system",
+          "to": "system"
+        },
+        {
+          "from": "system",
+          "to": "container"
+        },
+        {
+          "from": "system",
+          "to": "database"
+        },
+        {
+          "from": "system",
+          "to": "webapp"
+        },
+        {
+          "from": "system",
+          "to": "queue"
+        },
+        {
+          "from": "system",
+          "to": "component"
+        },
+        {
+          "forwardLabel": "Delivers to",
+          "from": "container",
+          "inverseLabel": "Receives from",
+          "to": "person"
+        },
+        {
+          "from": "container",
+          "to": "system"
+        },
+        {
+          "from": "container",
+          "to": "container"
+        },
+        {
+          "from": "container",
+          "to": "database"
+        },
+        {
+          "from": "container",
+          "to": "webapp"
+        },
+        {
+          "from": "container",
+          "to": "queue"
+        },
+        {
+          "from": "container",
+          "to": "component"
+        },
+        {
+          "forwardLabel": "Delivers to",
+          "from": "webapp",
+          "inverseLabel": "Receives from",
+          "to": "person"
+        },
+        {
+          "from": "webapp",
+          "to": "system"
+        },
+        {
+          "from": "webapp",
+          "to": "container"
+        },
+        {
+          "from": "webapp",
+          "to": "database"
+        },
+        {
+          "from": "webapp",
+          "to": "webapp"
+        },
+        {
+          "from": "webapp",
+          "to": "queue"
+        },
+        {
+          "from": "webapp",
+          "to": "component"
+        },
+        {
+          "from": "queue",
+          "to": "container"
+        },
+        {
+          "from": "queue",
+          "to": "webapp"
+        },
+        {
+          "from": "queue",
+          "to": "component"
+        },
+        {
+          "from": "component",
+          "to": "component"
+        },
+        {
+          "from": "component",
+          "to": "container"
+        },
+        {
+          "from": "component",
+          "to": "webapp"
+        },
+        {
+          "from": "component",
+          "to": "database"
+        },
+        {
+          "from": "component",
+          "to": "queue"
+        },
+        {
+          "from": "component",
+          "to": "system"
+        }
+      ],
+      "builtin": true,
+      "description": "Any meaningful interaction: the source calls, uses, sends to or delivers to the target. The label says what happens, the technology how.",
+      "forwardLabel": "Uses",
+      "id": "interacts",
+      "inverseLabel": "Used by",
+      "label": "Interacts",
+      "layout": {
+        "flow": "forward"
+      },
+      "properties": [
+        {
+          "key": "technology",
+          "label": "Technology",
+          "type": "text"
+        }
+      ]
+    },
+    "realises": {
+      "allowedPairs": [
+        {
+          "from": "system",
+          "to": "domain"
+        },
+        {
+          "from": "container",
+          "to": "domain"
+        },
+        {
+          "from": "system",
+          "to": "entity"
+        },
+        {
+          "from": "container",
+          "to": "entity"
+        },
+        {
+          "from": "component",
+          "to": "entity"
+        },
+        {
+          "from": "webapp",
+          "to": "entity"
+        }
+      ],
+      "builtin": true,
+      "description": "The software behind a domain or an entity: the bounded context that implements the domain, or the element that owns the entity's data.",
+      "id": "realises",
+      "inverseLabel": "Realised by",
+      "label": "Realises",
+      "layout": {
+        "flow": "side"
+      },
+      "properties": []
+    },
+    "part-of": {
+      "allowedPairs": [
+        {
+          "from": "entity",
+          "to": "entity"
+        }
+      ],
+      "builtin": true,
+      "color": "#7e22ce",
+      "description": "A part of an aggregate points to its root.",
+      "id": "part-of",
+      "inverseLabel": "Made up of",
+      "label": "Part of",
+      "layout": {
+        "axis": "vertical",
+        "flow": "reverse"
+      },
+      "properties": []
+    },
+    "references": {
+      "allowedPairs": [
+        {
+          "from": "entity",
+          "to": "entity"
+        }
+      ],
+      "builtin": true,
+      "color": "#a855f7",
+      "description": "One aggregate refers to another by id.",
+      "id": "references",
+      "inverseLabel": "Referenced by",
+      "label": "References",
+      "layout": {
+        "axis": "horizontal",
+        "flow": "side"
+      },
+      "properties": [
+        {
+          "default": "one",
+          "key": "cardinality",
+          "label": "Cardinality",
+          "options": [
+            "one",
+            "many"
+          ],
+          "type": "enum"
+        },
+        {
+          "key": "description",
+          "label": "Description",
+          "type": "text"
+        }
+      ]
+    },
+    "depends-on": {
+      "allowedPairs": [
+        {
+          "from": "domain",
+          "to": "domain"
+        }
+      ],
+      "builtin": true,
+      "description": "The source domain needs the target to do its work.",
+      "id": "depends-on",
+      "inverseLabel": "Depended on by",
+      "label": "Depends on",
+      "layout": {
+        "flow": "forward"
+      },
+      "properties": [
+        {
+          "key": "description",
+          "label": "Description",
+          "type": "text"
+        }
+      ]
+    },
+    "partnership": {
+      "allowedPairs": [
+        {
+          "from": "domain",
+          "to": "domain"
+        }
+      ],
+      "builtin": true,
+      "description": "How the models of two domains meet, with a context-mapping pattern.",
+      "forwardLabel": "Partners with",
+      "id": "partnership",
+      "inverseLabel": "Partners with",
+      "label": "Partnership",
+      "layout": {
+        "axis": "horizontal",
+        "flow": "side"
+      },
+      "properties": [
+        {
+          "default": "partnership",
+          "key": "pattern",
+          "label": "Pattern",
+          "options": [
+            "partnership",
+            "shared-kernel",
+            "customer-supplier",
+            "conformist",
+            "anti-corruption-layer",
+            "open-host-service",
+            "published-language",
+            "separate-ways"
+          ],
+          "type": "enum"
+        },
+        {
+          "key": "description",
+          "label": "Description",
+          "type": "text"
+        }
+      ]
+    },
+    "constrains": {
+      "allowedPairs": [
+        {
+          "from": "adr",
+          "to": "person"
+        },
+        {
+          "from": "adr",
+          "to": "system"
+        },
+        {
+          "from": "adr",
+          "to": "domain"
+        },
+        {
+          "from": "adr",
+          "to": "container"
+        },
+        {
+          "from": "adr",
+          "to": "component"
+        },
+        {
+          "from": "adr",
+          "to": "database"
+        },
+        {
+          "from": "adr",
+          "to": "webapp"
+        },
+        {
+          "from": "adr",
+          "to": "queue"
+        },
+        {
+          "from": "fitness-fn",
+          "to": "person"
+        },
+        {
+          "from": "fitness-fn",
+          "to": "system"
+        },
+        {
+          "from": "fitness-fn",
+          "to": "domain"
+        },
+        {
+          "from": "fitness-fn",
+          "to": "container"
+        },
+        {
+          "from": "fitness-fn",
+          "to": "component"
+        },
+        {
+          "from": "fitness-fn",
+          "to": "database"
+        },
+        {
+          "from": "fitness-fn",
+          "to": "webapp"
+        },
+        {
+          "from": "fitness-fn",
+          "to": "queue"
+        },
+        {
+          "from": "requirement",
+          "to": "person"
+        },
+        {
+          "from": "requirement",
+          "to": "system"
+        },
+        {
+          "from": "requirement",
+          "to": "domain"
+        },
+        {
+          "from": "requirement",
+          "to": "container"
+        },
+        {
+          "from": "requirement",
+          "to": "component"
+        },
+        {
+          "from": "requirement",
+          "to": "database"
+        },
+        {
+          "from": "requirement",
+          "to": "webapp"
+        },
+        {
+          "from": "requirement",
+          "to": "queue"
+        }
+      ],
+      "builtin": true,
+      "color": "#dc2626",
+      "description": "The decision, check or requirement applies to the target element.",
+      "governance": true,
+      "id": "constrains",
+      "inverseLabel": "Constrained by",
+      "label": "Constrains",
+      "layout": {
+        "flow": "side"
+      },
+      "properties": [
+        {
+          "key": "description",
+          "label": "Note",
+          "type": "text"
+        }
+      ]
+    },
+    "supersedes": {
+      "allowedPairs": [
+        {
+          "from": "adr",
+          "to": "adr"
+        }
+      ],
+      "builtin": true,
+      "color": "#f59e0b",
+      "description": "The newer decision replaces the older one.",
+      "governance": true,
+      "id": "supersedes",
+      "inverseLabel": "Superseded by",
+      "label": "Supersedes",
+      "layout": {
+        "flow": "forward"
+      },
+      "properties": []
+    },
+    "implements": {
+      "allowedPairs": [
+        {
+          "from": "fitness-fn",
+          "to": "adr"
+        },
+        {
+          "from": "system",
+          "to": "state-machine"
+        },
+        {
+          "from": "container",
+          "to": "state-machine"
+        },
+        {
+          "from": "component",
+          "to": "state-machine"
+        },
+        {
+          "from": "webapp",
+          "to": "state-machine"
+        }
+      ],
+      "builtin": true,
+      "color": "#7c3aed",
+      "description": "A fitness function checks that a decision still holds; a C4 element runs a state machine.",
+      "governance": true,
+      "id": "implements",
+      "inverseLabel": "Implemented by",
+      "label": "Implements",
+      "layout": {
+        "flow": "side"
+      },
+      "properties": []
+    },
+    "satisfies": {
+      "allowedPairs": [
+        {
+          "from": "person",
+          "to": "requirement"
+        },
+        {
+          "from": "system",
+          "to": "requirement"
+        },
+        {
+          "from": "domain",
+          "to": "requirement"
+        },
+        {
+          "from": "container",
+          "to": "requirement"
+        },
+        {
+          "from": "component",
+          "to": "requirement"
+        },
+        {
+          "from": "database",
+          "to": "requirement"
+        },
+        {
+          "from": "webapp",
+          "to": "requirement"
+        },
+        {
+          "from": "queue",
+          "to": "requirement"
+        },
+        {
+          "from": "state-machine",
+          "to": "requirement"
+        },
+        {
+          "from": "entity",
+          "to": "requirement"
+        },
+        {
+          "from": "process",
+          "to": "requirement"
+        }
+      ],
+      "builtin": true,
+      "color": "#0891b2",
+      "description": "The element is what makes the requirement true.",
+      "governance": true,
+      "id": "satisfies",
+      "inverseLabel": "Satisfied by",
+      "label": "Satisfies",
+      "layout": {
+        "flow": "side"
+      },
+      "properties": [
+        {
+          "key": "description",
+          "label": "Note",
+          "type": "text"
+        }
+      ]
+    },
+    "derives": {
+      "allowedPairs": [
+        {
+          "from": "requirement",
+          "to": "requirement"
+        },
+        {
+          "from": "requirement",
+          "to": "need"
+        },
+        {
+          "from": "need",
+          "to": "need"
+        }
+      ],
+      "builtin": true,
+      "color": "#0d9488",
+      "description": "A requirement turns stakeholder input into a shall-statement or refines a broader requirement; a need sits inside a broader need.",
+      "governance": true,
+      "id": "derives",
+      "inverseLabel": "Refined into",
+      "label": "Derives from",
+      "layout": {
+        "axis": "vertical",
+        "flow": "reverse"
+      },
+      "properties": []
+    },
+    "traces-to": {
+      "allowedPairs": [
+        {
+          "from": "requirement",
+          "to": "adr"
+        },
+        {
+          "from": "requirement",
+          "to": "fitness-fn"
+        }
+      ],
+      "builtin": true,
+      "color": "#06b6d4",
+      "description": "The decision the requirement led to, or the check that keeps it.",
+      "governance": true,
+      "id": "traces-to",
+      "inverseLabel": "Traced from",
+      "label": "Traces to",
+      "layout": {
+        "axis": "vertical",
+        "flow": "reverse"
+      },
+      "properties": []
+    },
+    "verifies": {
+      "allowedPairs": [
+        {
+          "from": "scenario",
+          "to": "requirement"
+        },
+        {
+          "from": "scenario",
+          "to": "state-machine"
+        },
+        {
+          "from": "scenario",
+          "to": "process"
+        }
+      ],
+      "builtin": true,
+      "color": "#16a34a",
+      "description": "The scenario is the acceptance test of the requirement or state machine.",
+      "governance": true,
+      "id": "verifies",
+      "inverseLabel": "Verified by",
+      "label": "Verifies",
+      "layout": {
+        "axis": "vertical",
+        "flow": "reverse"
+      },
+      "properties": []
+    },
+    "illustrates": {
+      "allowedPairs": [
+        {
+          "from": "mockup",
+          "to": "requirement"
+        },
+        {
+          "from": "mockup",
+          "to": "scenario"
+        },
+        {
+          "from": "mockup",
+          "to": "state"
+        }
+      ],
+      "builtin": true,
+      "color": "#db2777",
+      "description": "The screen shows the requirement being met, the step of the scenario, or what the user sees in the state.",
+      "governance": true,
+      "id": "illustrates",
+      "inverseLabel": "Illustrated by",
+      "label": "Illustrates",
+      "layout": {
+        "flow": "side"
+      },
+      "properties": []
+    },
+    "presented-by": {
+      "allowedPairs": [
+        {
+          "from": "mockup",
+          "to": "webapp"
+        },
+        {
+          "from": "mockup",
+          "to": "container"
+        },
+        {
+          "from": "mockup",
+          "to": "component"
+        },
+        {
+          "from": "mockup",
+          "to": "system"
+        }
+      ],
+      "builtin": true,
+      "color": "#be185d",
+      "description": "The part of the architecture that renders the screen.",
+      "governance": true,
+      "id": "presented-by",
+      "inverseLabel": "Presents",
+      "label": "Presented by",
+      "layout": {
+        "flow": "side"
+      },
+      "properties": []
+    },
+    "navigates-to": {
+      "allowedPairs": [
+        {
+          "from": "mockup",
+          "to": "mockup"
+        }
+      ],
+      "builtin": true,
+      "color": "#f472b6",
+      "description": "One step of a screen flow, with what triggers it.",
+      "id": "navigates-to",
+      "inverseLabel": "Reached from",
+      "label": "Navigates to",
+      "layout": {
+        "axis": "horizontal",
+        "flow": "forward"
+      },
+      "properties": [
+        {
+          "key": "description",
+          "label": "Trigger",
+          "type": "text"
+        }
+      ]
+    },
+    "transition": {
+      "allowedPairs": [
+        {
+          "from": "state",
+          "to": "state"
+        },
+        {
+          "from": "state",
+          "to": "pseudostate"
+        },
+        {
+          "from": "pseudostate",
+          "to": "state"
+        },
+        {
+          "from": "pseudostate",
+          "to": "pseudostate"
+        }
+      ],
+      "builtin": true,
+      "color": "#6366f1",
+      "description": "The machine moves from one state to another: on an event, under a guard, running actions.",
+      "forwardLabel": "Transitions to",
+      "id": "transition",
+      "inverseLabel": "Entered from",
+      "label": "Transition",
+      "layout": {
+        "axis": "vertical",
+        "flow": "forward"
+      },
+      "properties": [
+        {
+          "key": "event",
+          "label": "Event (trigger; none = completion)",
+          "refType": "event",
+          "type": "ref"
+        },
+        {
+          "key": "guard",
+          "label": "Guard [condition]",
+          "type": "text"
+        },
+        {
+          "key": "actions",
+          "label": "Actions (/ effect)",
+          "type": "text"
+        },
+        {
+          "key": "raises",
+          "label": "Raises (events it publishes)",
+          "multiple": true,
+          "refType": "event",
+          "type": "ref"
+        },
+        {
+          "default": "external",
+          "key": "kind",
+          "label": "Kind",
+          "options": [
+            "external",
+            "internal"
+          ],
+          "type": "enum"
+        }
+      ]
+    },
+    "lifecycle-of": {
+      "allowedPairs": [
+        {
+          "from": "state-machine",
+          "to": "entity"
+        }
+      ],
+      "builtin": true,
+      "color": "#3730a3",
+      "description": "The machine is the lifecycle of that entity.",
+      "id": "lifecycle-of",
+      "inverseLabel": "Lifecycle modelled by",
+      "label": "Lifecycle of",
+      "layout": {
+        "flow": "side"
+      },
+      "properties": []
+    },
+    "emits": {
+      "allowedPairs": [
+        {
+          "from": "person",
+          "to": "event"
+        },
+        {
+          "from": "system",
+          "to": "event"
+        },
+        {
+          "from": "container",
+          "to": "event"
+        },
+        {
+          "from": "component",
+          "to": "event"
+        },
+        {
+          "from": "webapp",
+          "to": "event"
+        },
+        {
+          "from": "queue",
+          "to": "event"
+        },
+        {
+          "from": "state-machine",
+          "to": "event"
+        },
+        {
+          "from": "state",
+          "to": "event"
+        }
+      ],
+      "builtin": true,
+      "color": "#ea580c",
+      "description": "The element raises the event.",
+      "id": "emits",
+      "inverseLabel": "Emitted by",
+      "label": "Emits",
+      "layout": {
+        "flow": "side"
+      },
+      "properties": [
+        {
+          "default": "entry",
+          "key": "on",
+          "label": "On (for a state: entry, exit or do)",
+          "options": [
+            "entry",
+            "exit",
+            "do"
+          ],
+          "type": "enum"
+        }
+      ]
+    },
+    "performed-by": {
+      "allowedPairs": [
+        {
+          "from": "step",
+          "to": "person"
+        },
+        {
+          "from": "step",
+          "to": "system"
+        },
+        {
+          "from": "step",
+          "to": "container"
+        },
+        {
+          "from": "step",
+          "to": "component"
+        },
+        {
+          "from": "step",
+          "to": "webapp"
+        }
+      ],
+      "builtin": true,
+      "color": "#0d9488",
+      "description": "The person or part of the architecture that does the step.",
+      "id": "performed-by",
+      "inverseLabel": "Performs",
+      "label": "Performed by",
+      "layout": {
+        "flow": "side"
+      },
+      "properties": []
+    }
+  },
+  "viewpoints": [
+    {
+      "description": "The people and software systems, and how they use each other (C4 level 1).",
+      "group": "C4",
+      "id": "system-context",
+      "kind": "static",
+      "label": "System context",
+      "pipeline": {
+        "edges": "all",
+        "levels": [
+          {
+            "ways": [
+              {
+                "types": [
+                  "person",
+                  "system"
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "description": "The software systems with the containers, web apps, databases and queues inside them, the people who use them, and every relation between them (C4 level 2).",
+      "group": "C4",
+      "id": "containers",
+      "kind": "static",
+      "label": "Containers",
+      "pipeline": {
+        "edges": "all",
+        "levels": [
+          {
+            "ways": [
+              {
+                "types": [
+                  "person",
+                  "system",
+                  "container",
+                  "webapp",
+                  "database",
+                  "queue"
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "description": "One software system with the containers, web apps, databases and queues inside it, and the people, systems and containers they are related to: a view per system (C4 level 2).",
+      "group": "C4",
+      "id": "system-containers",
+      "kind": "static",
+      "label": "Containers of a system",
+      "pipeline": {
+        "edges": "all",
+        "levels": [
+          {
+            "ways": [
+              {
+                "types": [
+                  "system",
+                  "container",
+                  "webapp",
+                  "database",
+                  "queue"
+                ]
+              }
+            ]
+          },
+          {
+            "ways": [
+              {
+                "types": [
+                  "person",
+                  "system",
+                  "container",
+                  "webapp",
+                  "database",
+                  "queue"
+                ],
+                "via": {
+                  "anyRelation": true
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "subject": {
+        "types": [
+          "system"
+        ]
+      }
+    },
+    {
+      "description": "The containers and web apps with the components inside them, the databases and queues they use, and every relation between them (C4 level 3).",
+      "group": "C4",
+      "id": "components",
+      "kind": "static",
+      "label": "Components",
+      "pipeline": {
+        "edges": "all",
+        "levels": [
+          {
+            "ways": [
+              {
+                "types": [
+                  "container",
+                  "webapp",
+                  "component",
+                  "database",
+                  "queue"
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "description": "One container or web app with the components inside it, and the people, systems, containers and components they are related to: a view per container (C4 level 3).",
+      "group": "C4",
+      "id": "container-components",
+      "kind": "static",
+      "label": "Components of a container",
+      "pipeline": {
+        "edges": "all",
+        "levels": [
+          {
+            "ways": [
+              {
+                "types": [
+                  "container",
+                  "webapp",
+                  "component"
+                ]
+              }
+            ]
+          },
+          {
+            "ways": [
+              {
+                "types": [
+                  "person",
+                  "system",
+                  "container",
+                  "webapp",
+                  "database",
+                  "queue",
+                  "component"
+                ],
+                "via": {
+                  "anyRelation": true
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "subject": {
+        "types": [
+          "container",
+          "webapp"
+        ]
+      }
+    },
+    {
+      "description": "A matrix of the containers, web apps, databases and queues: who uses whom, and where the cycles are.",
+      "group": "C4",
+      "id": "container-dependencies",
+      "kind": "matrix",
+      "label": "Container dependencies",
+      "pipeline": {
+        "edges": "all",
+        "levels": [
+          {
+            "ways": [
+              {
+                "types": [
+                  "container",
+                  "webapp",
+                  "database",
+                  "queue"
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "description": "The domains and subdomains, and how they depend on and partner with each other.",
+      "group": "Domain",
+      "id": "domain-map",
+      "kind": "static",
+      "label": "Domain map",
+      "pipeline": {
+        "edges": "all",
+        "levels": [
+          {
+            "ways": [
+              {
+                "types": [
+                  "domain"
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "description": "The entities and aggregates, what they are part of and what they reference.",
+      "group": "Domain",
+      "id": "domain-model",
+      "kind": "static",
+      "label": "Domain model",
+      "pipeline": {
+        "edges": "all",
+        "levels": [
+          {
+            "ways": [
+              {
+                "types": [
+                  "entity"
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "description": "One domain with its subdomains and entities, and the entities of other domains they reference or are part of: a view per domain.",
+      "group": "Domain",
+      "id": "domain-entities",
+      "kind": "static",
+      "label": "Entities of a domain",
+      "pipeline": {
+        "edges": "all",
+        "levels": [
+          {
+            "ways": [
+              {
+                "types": [
+                  "domain",
+                  "entity"
+                ]
+              }
+            ]
+          },
+          {
+            "ways": [
+              {
+                "types": [
+                  "entity"
+                ],
+                "via": {
+                  "direction": "out",
+                  "relationType": "references"
+                }
+              },
+              {
+                "types": [
+                  "entity"
+                ],
+                "via": {
+                  "direction": "out",
+                  "relationType": "part-of"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "subject": {
+        "types": [
+          "domain"
+        ]
+      }
+    },
+    {
+      "description": "A table of domains, their entities, and the systems, containers and components that realise each.",
+      "group": "Domain",
+      "id": "domain-realisation",
+      "kind": "table",
+      "label": "Domain realisation",
+      "pipeline": {
+        "levels": [
+          {
+            "ways": [
+              {
+                "types": [
+                  "domain"
+                ]
+              }
+            ]
+          },
+          {
+            "ways": [
+              {
+                "types": [
+                  "entity"
+                ],
+                "via": {
+                  "contains": true
+                }
+              },
+              {
+                "via": {
+                  "direction": "in",
+                  "relationType": "realises"
+                }
+              }
+            ]
+          },
+          {
+            "ways": [
+              {
+                "via": {
+                  "direction": "in",
+                  "relationType": "realises"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "description": "A table of needs, the requirements refined from each, and the scenarios that verify those.",
+      "group": "Requirements",
+      "id": "traceability",
+      "kind": "table",
+      "label": "Traceability",
+      "pipeline": {
+        "levels": [
+          {
+            "ways": [
+              {
+                "types": [
+                  "need"
+                ]
+              }
+            ]
+          },
+          {
+            "ways": [
+              {
+                "types": [
+                  "requirement"
+                ],
+                "via": {
+                  "direction": "in",
+                  "relationType": "derives"
+                }
+              }
+            ]
+          },
+          {
+            "ways": [
+              {
+                "types": [
+                  "scenario"
+                ],
+                "via": {
+                  "direction": "in",
+                  "relationType": "verifies"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "description": "A table of requirements, the elements that satisfy each and the scenarios that verify it.",
+      "group": "Requirements",
+      "id": "requirement-coverage",
+      "kind": "table",
+      "label": "Requirement coverage",
+      "pipeline": {
+        "levels": [
+          {
+            "ways": [
+              {
+                "types": [
+                  "requirement"
+                ]
+              }
+            ]
+          },
+          {
+            "ways": [
+              {
+                "via": {
+                  "direction": "in",
+                  "relationType": "satisfies"
+                }
+              },
+              {
+                "types": [
+                  "scenario"
+                ],
+                "via": {
+                  "direction": "in",
+                  "relationType": "verifies"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "description": "The requirements no scenario verifies or nothing satisfies yet.",
+      "group": "Requirements",
+      "id": "requirement-gaps",
+      "kind": "table",
+      "label": "Requirement gaps",
+      "pipeline": {
+        "levels": [
+          {
+            "filters": [
+              {
+                "direction": "in",
+                "has": false,
+                "kind": "relation",
+                "relationType": "verifies"
+              },
+              {
+                "direction": "in",
+                "has": false,
+                "join": "or",
+                "kind": "relation",
+                "relationType": "satisfies"
+              }
+            ],
+            "ways": [
+              {
+                "types": [
+                  "requirement"
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "description": "A table of the systems, containers and components that satisfy requirements, each with its requirements and the scenarios that verify them.",
+      "group": "Requirements",
+      "id": "responsibilities",
+      "kind": "table",
+      "label": "Responsibilities",
+      "pipeline": {
+        "levels": [
+          {
+            "filters": [
+              {
+                "direction": "out",
+                "has": true,
+                "kind": "relation",
+                "relationType": "satisfies"
+              }
+            ],
+            "ways": [
+              {
+                "types": [
+                  "system",
+                  "container",
+                  "webapp",
+                  "component",
+                  "database",
+                  "queue"
+                ]
+              }
+            ]
+          },
+          {
+            "ways": [
+              {
+                "types": [
+                  "requirement"
+                ],
+                "via": {
+                  "direction": "out",
+                  "relationType": "satisfies"
+                }
+              }
+            ]
+          },
+          {
+            "ways": [
+              {
+                "types": [
+                  "scenario"
+                ],
+                "via": {
+                  "direction": "in",
+                  "relationType": "verifies"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "description": "A document of the needs, the requirements refined from each, and the scenarios and screens for each requirement.",
+      "group": "Requirements",
+      "id": "specification",
+      "kind": "wiki",
+      "label": "Specification",
+      "pipeline": {
+        "levels": [
+          {
+            "ways": [
+              {
+                "types": [
+                  "need"
+                ]
+              }
+            ]
+          },
+          {
+            "ways": [
+              {
+                "types": [
+                  "requirement"
+                ],
+                "via": {
+                  "direction": "in",
+                  "relationType": "derives"
+                }
+              }
+            ]
+          },
+          {
+            "ways": [
+              {
+                "types": [
+                  "scenario"
+                ],
+                "via": {
+                  "direction": "in",
+                  "relationType": "verifies"
+                }
+              },
+              {
+                "types": [
+                  "mockup"
+                ],
+                "via": {
+                  "direction": "in",
+                  "relationType": "illustrates"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "description": "A table of ADRs, the fitness functions that check each and the elements it constrains.",
+      "group": "Decisions",
+      "id": "decisions",
+      "kind": "table",
+      "label": "Decisions",
+      "pipeline": {
+        "levels": [
+          {
+            "ways": [
+              {
+                "types": [
+                  "adr"
+                ]
+              }
+            ]
+          },
+          {
+            "ways": [
+              {
+                "types": [
+                  "fitness-fn"
+                ],
+                "via": {
+                  "direction": "in",
+                  "relationType": "implements"
+                }
+              },
+              {
+                "via": {
+                  "direction": "out",
+                  "relationType": "constrains"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "description": "A document of the ADRs, the newest first, each with the decisions it supersedes.",
+      "group": "Decisions",
+      "id": "decision-log",
+      "kind": "wiki",
+      "label": "Decision log",
+      "pipeline": {
+        "levels": [
+          {
+            "ways": [
+              {
+                "types": [
+                  "adr"
+                ]
+              }
+            ]
+          },
+          {
+            "ways": [
+              {
+                "types": [
+                  "adr"
+                ],
+                "via": {
+                  "direction": "out",
+                  "relationType": "supersedes"
+                }
+              }
+            ]
+          }
+        ],
+        "sort": {
+          "by": "property",
+          "desc": true,
+          "key": "date"
+        }
+      }
+    },
+    {
+      "description": "A table of the fitness functions by characteristic, each with the decisions it checks and the elements it constrains.",
+      "group": "Decisions",
+      "id": "fitness-functions",
+      "kind": "table",
+      "label": "Fitness functions",
+      "pipeline": {
+        "levels": [
+          {
+            "ways": [
+              {
+                "types": [
+                  "fitness-fn"
+                ]
+              }
+            ]
+          },
+          {
+            "ways": [
+              {
+                "types": [
+                  "adr"
+                ],
+                "via": {
+                  "direction": "out",
+                  "relationType": "implements"
+                }
+              },
+              {
+                "via": {
+                  "direction": "out",
+                  "relationType": "constrains"
+                }
+              }
+            ]
+          }
+        ],
+        "sort": {
+          "by": "property",
+          "key": "characteristic"
+        }
+      }
+    },
+    {
+      "description": "The screens and how users navigate from one to the next.",
+      "group": "UX",
+      "id": "screen-flow",
+      "kind": "static",
+      "label": "Screen flow",
+      "pipeline": {
+        "edges": "all",
+        "levels": [
+          {
+            "ways": [
+              {
+                "types": [
+                  "mockup"
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "description": "A table of the screens, each with the requirements and scenarios it illustrates and the elements that present it.",
+      "group": "UX",
+      "id": "screens",
+      "kind": "table",
+      "label": "Screens",
+      "pipeline": {
+        "levels": [
+          {
+            "ways": [
+              {
+                "types": [
+                  "mockup"
+                ]
+              }
+            ]
+          },
+          {
+            "ways": [
+              {
+                "via": {
+                  "direction": "out",
+                  "relationType": "illustrates"
+                }
+              },
+              {
+                "via": {
+                  "direction": "out",
+                  "relationType": "presented-by"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "description": "A table of the entities with a lifecycle, the state machine of each, and what implements and verifies it.",
+      "group": "States",
+      "id": "entity-lifecycles",
+      "kind": "table",
+      "label": "Entity lifecycles",
+      "pipeline": {
+        "levels": [
+          {
+            "filters": [
+              {
+                "direction": "in",
+                "has": true,
+                "kind": "relation",
+                "relationType": "lifecycle-of"
+              }
+            ],
+            "ways": [
+              {
+                "types": [
+                  "entity"
+                ]
+              }
+            ]
+          },
+          {
+            "ways": [
+              {
+                "types": [
+                  "state-machine"
+                ],
+                "via": {
+                  "direction": "in",
+                  "relationType": "lifecycle-of"
+                }
+              }
+            ]
+          },
+          {
+            "ways": [
+              {
+                "via": {
+                  "direction": "in",
+                  "relationType": "implements"
+                }
+              },
+              {
+                "types": [
+                  "scenario"
+                ],
+                "via": {
+                  "direction": "in",
+                  "relationType": "verifies"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "description": "One state machine with its states, pseudostates, events and transitions, and the entity it is the lifecycle of: a view per machine.",
+      "group": "States",
+      "id": "state-machine",
+      "kind": "static",
+      "label": "State machine",
+      "pipeline": {
+        "edges": "all",
+        "levels": [
+          {
+            "ways": [
+              {
+                "types": [
+                  "state-machine",
+                  "state",
+                  "pseudostate",
+                  "event"
+                ]
+              }
+            ]
+          },
+          {
+            "ways": [
+              {
+                "types": [
+                  "entity"
+                ],
+                "via": {
+                  "direction": "out",
+                  "relationType": "lifecycle-of"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "subject": {
+        "types": [
+          "state-machine"
+        ]
+      }
+    },
+    {
+      "description": "A table of the events, each with what emits it.",
+      "group": "States",
+      "id": "event-catalogue",
+      "kind": "table",
+      "label": "Event catalogue",
+      "pipeline": {
+        "levels": [
+          {
+            "ways": [
+              {
+                "types": [
+                  "event"
+                ]
+              }
+            ]
+          },
+          {
+            "ways": [
+              {
+                "via": {
+                  "direction": "in",
+                  "relationType": "emits"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "description": "The processes and their steps as Warnier–Orr diagrams: what each is made of, what repeats, what is an alternative and what runs at once.",
+      "group": "Process",
+      "id": "process-warnier",
+      "kind": "warnier",
+      "label": "Process (Warnier)",
+      "pipeline": {
+        "levels": [
+          {
+            "ways": [
+              {
+                "types": [
+                  "process",
+                  "step"
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "description": "One process and its steps as a Warnier–Orr diagram: a view per process.",
+      "group": "Process",
+      "id": "process",
+      "kind": "warnier",
+      "label": "Process",
+      "pipeline": {
+        "levels": [
+          {
+            "ways": [
+              {
+                "types": [
+                  "process",
+                  "step"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "subject": {
+        "types": [
+          "process"
+        ]
+      }
+    }
+  ]
+}
