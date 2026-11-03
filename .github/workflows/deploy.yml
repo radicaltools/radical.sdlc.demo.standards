@@ -33,6 +33,12 @@ jobs:
       - run: npm run test:reports
       - name: The versions of the other systems' images
         run: node .standards/pipeline/tools/pins-env.mjs >> "$GITHUB_ENV"
+      # The images of the company are private. A repository that runs another's has been given
+      # read access to those packages, in their settings (Manage Actions access).
+      - name: Sign in to the company's images
+        env:
+          TOKEN: ${{ github.token }}
+        run: echo "$TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
       - name: Start the stack
         run: docker compose up --build --wait --wait-timeout 120
       - name: Measure it
@@ -43,10 +49,7 @@ jobs:
         if: failure()
         run: docker compose logs
       - name: Publish the images
-        env:
-          TOKEN: ${{ github.token }}
         run: |
-          echo "$TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
           # Only this repository's services: the other systems' images are theirs.
           docker compose push $(node -p "require('./.radical/pipeline.json').services.join(' ')")
       - name: Stop the stack
