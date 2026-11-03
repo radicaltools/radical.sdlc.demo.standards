@@ -1,0 +1,53 @@
+name: Temporary write probe
+on:
+  pull_request:
+    paths: ['.github/workflows/tmp-write-probe.yml']
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: radicaltools/radical.tools.sdlc.demo.2.shop
+          persist-credentials: false
+      - run: node tools/standards.mjs
+      - uses: ./.standards/.github/actions/setup
+        with:
+          claude: 'true'
+      - name: Probe
+        env:
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+        run: |
+          cat > /tmp/show.py <<'PY'
+          import json,sys
+          pending={}
+          for line in open(sys.argv[1]):
+              try: m=json.loads(line)
+              except Exception: continue
+              if m.get('type')=='assistant':
+                  ids=[]
+                  for c in m['message'].get('content',[]):
+                      if c.get('type')=='tool_use':
+                          pending[c['id']]=c; ids.append(c['name'])
+                  if ids: print('TURN', ids)
+              if m.get('type')=='user':
+                  for c in (m['message'].get('content') or []):
+                      if isinstance(c,dict) and c.get('type')=='tool_result':
+                          u=pending.get(c.get('tool_use_id'),{})
+                          inp=u.get('input',{})
+                          t=c.get('content'); t=t if isinstance(t,str) else json.dumps(t)
+                          if u.get('name') in('Write','Edit') or c.get('is_error'):
+                              print(u.get('name'),'err' if c.get('is_error') else 'ok',str(inp.get('file_path') or inp.get('command'))[-110:],'|',t[:260].replace('\n',' '))
+              if m.get('type')=='system' and m.get('subtype')=='init':
+                  print('INIT cwd',m.get('cwd'),'mode',m.get('permissionMode'))
+          PY
+          npx radical explore prepare --runs 1 --areas "Pricing service: Quantity below one refused" --no-build | head -2
+          P=$(ls .radical/crucible/rounds/*/run-1/PROMPT.md)
+          for i in 1 2 3; do
+            echo "=== attempt $i"
+            claude -p "/explore-agent prompt=$P" --model claude-haiku-5-5 --max-turns 30 --mcp-config .mcp.json --strict-mcp-config --allowedTools Read Glob Grep mcp__radical__get_model_summary mcp__radical__search_model 'Bash(git log*)' 'Bash(node *)' 'Bash(ls *)' 'Edit(.radical/crucible/rounds/**)' 'Write(.radical/crucible/rounds/**)' --output-format stream-json --verbose > /tmp/out$i.jsonl || true
+            python3 /tmp/show.py /tmp/out$i.jsonl
+          done
