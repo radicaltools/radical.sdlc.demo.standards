@@ -1,6 +1,8 @@
 // What each agent may do, in one place. `tools` is the allow-list claude -p
 // runs it with (an Edit rule covers every file-editing tool; anything else is
-// denied, as nobody is there to ask). `scope` is what its commits may change,
+// denied, as nobody is there to ask). A path rule starts with a slash, from the
+// project's root: without it the rule follows the working directory, and stops
+// matching after an agent runs `cd run-1 && node x.mjs`. `scope` is what its commits may change,
 // which the gate checks afterwards (tools/agent-scope.mjs). The workflows
 // commit as `author`; the agents hold no git credentials.
 //
@@ -24,21 +26,21 @@ export const AGENTS = {
     author: 'radical-coding-agent',
     maxTurns: 80,
     tools: [...READ, ...READ_MODEL, 'mcp__radical__set_verification', 'mcp__radical__set_implementation', ...INSPECT, ...RUN, 'Bash(npx radical *)',
-      'Edit(services/**)', 'Edit(packages/**)', 'Edit(tests/**)', 'Edit(.radical/sensors/**)', 'Edit(.radical/crucible/findings/**)'],
+      'Edit(/services/**)', 'Edit(/packages/**)', 'Edit(/tests/**)', 'Edit(/.radical/sensors/**)', 'Edit(/.radical/crucible/findings/**)'],
     scope: { allow: ['services/**', 'packages/**', 'tests/**', '.radical/radical.json', '.radical/sensors/**', '.radical/crucible/findings/**'] },
   },
   'testing-agent': {
     author: 'radical-testing-agent',
     maxTurns: 50,
     tools: [...READ, ...READ_MODEL, ...INSPECT, ...RUN, 'mcp__radical__set_verification', 'Bash(npx radical check*)', 'Bash(npx radical verify*)', 'Bash(npx radical sense*)',
-      'Edit(services/*/test/**)', 'Edit(tests/**)', 'Edit(.radical/sensors/**)'],
+      'Edit(/services/*/test/**)', 'Edit(/tests/**)', 'Edit(/.radical/sensors/**)'],
     scope: { allow: ['services/*/test/**', 'tests/**', '.radical/sensors/**', '.radical/radical.json'] },
   },
   'explore-agent': {
     author: 'radical-explore-agent',
     maxTurns: 50,
     tools: [...READ, ...READ_MODEL, 'Bash(git log*)', 'Bash(node *)', 'Bash(ls *)',
-      'Edit(.radical/crucible/rounds/**)', 'Write(.radical/crucible/rounds/**)'],
+      'Edit(/.radical/crucible/rounds/**)', 'Write(/.radical/crucible/rounds/**)'],
     scope: { allow: ['.radical/crucible/findings/**'] },
   },
 }

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { violations } from '../tools/agent-scope.mjs'
-import { agentEnvironment, outOfScope } from '../tools/agents.mjs'
+import { AGENTS, agentEnvironment, outOfScope } from '../tools/agents.mjs'
 import { nightlyFindings } from '../tools/nightly-findings.mjs'
 import { decide } from '../tools/prepare-for-review.mjs'
 import { confirmedReport, findingsOf } from '../tools/explore-round.mjs'
@@ -38,13 +38,13 @@ describe('agent run', () => {
   it('starts the skill with its allow-list', () => {
     const args = claudeArguments('testing-agent', ['base=main'], 'm')
     expect(args.slice(0, 2)).toEqual(['-p', '/testing-agent base=main'])
-    expect(args).toContain('Edit(tests/**)')
-    expect(args).not.toContain('Edit(services/**)')
+    expect(args).toContain('Edit(/tests/**)')
+    expect(args).not.toContain('Edit(/services/**)')
     expect(args).not.toContain('mcp__radical')
   })
   it('lets the explore agent write in the round, and nothing else', () => {
     const writes = claudeArguments('explore-agent', [], 'm').filter((a) => /^(Edit|Write)\(/.test(a))
-    expect(writes).toEqual(['Edit(.radical/crucible/rounds/**)', 'Write(.radical/crucible/rounds/**)'])
+    expect(writes).toEqual(['Edit(/.radical/crucible/rounds/**)', 'Write(/.radical/crucible/rounds/**)'])
   })
   it('gives the model agent the model tools, and no way to write a file', () => {
     const args = claudeArguments('model-agent', ['brief=b'], 'm')
@@ -220,5 +220,13 @@ describe('what a run reports', () => {
   })
   it('has none on a run with no result', () => {
     expect(readResult('not json', 'explore-agent').denials).toEqual([])
+  })
+})
+
+describe('path rules', () => {
+  it('start from the root of the project, so a cd does not end them', () => {
+    for (const [name, { tools }] of Object.entries(AGENTS)) {
+      for (const rule of tools.filter((tool) => /^(Edit|Write)\(/.test(tool))) expect(rule, name).toMatch(/^(Edit|Write)\(\//)
+    }
   })
 })
