@@ -209,3 +209,16 @@ describe('nightly findings', () => {
     expect(nightlyFindings(check, [{ name: 'F-0001.md', text: 'status: "open"\nsignature: "sense|fitness-fn-failed|n1"' }], options)).toEqual([])
   })
 })
+
+describe('what a run reports', () => {
+  it('says what the allow-list refused', () => {
+    const { denials } = readResult(JSON.stringify({ result: 'done', permission_denials: [
+      { tool_name: 'Write', tool_input: { file_path: '/x/a.mjs' } },
+      { tool_name: 'Bash', tool_input: { command: 'mkdir y' } },
+    ] }), 'explore-agent')
+    expect(denials).toEqual([{ tool: 'Write', target: '/x/a.mjs' }, { tool: 'Bash', target: 'mkdir y' }])
+  })
+  it('has none on a run with no result', () => {
+    expect(readResult('not json', 'explore-agent').denials).toEqual([])
+  })
+})

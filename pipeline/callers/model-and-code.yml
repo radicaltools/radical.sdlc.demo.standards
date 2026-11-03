@@ -26,7 +26,7 @@ permissions:
 
 jobs:
   agents:
-    uses: radicaltools/radical.tools.sdlc.demo.2.standards/.github/workflows/model-and-code.yml@v1.0.4
+    uses: radicaltools/radical.tools.sdlc.demo.2.standards/.github/workflows/model-and-code.yml@v1.0.5
     secrets: inherit
     with:
       finding: ${{ inputs.finding }}

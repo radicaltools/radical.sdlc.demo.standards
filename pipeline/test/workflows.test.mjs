@@ -248,6 +248,15 @@ describe('the files a system calls the pipeline from', () => {
   })
 })
 
+describe('a night that checked nothing', () => {
+  it('is red, after what it found is proposed', () => {
+    const steps = workflow('nightly').jobs.night.steps.map((s) => s.name)
+    expect(steps.at(-1)).toBe('Every area was checked')
+    expect(steps.indexOf('Propose them')).toBeLessThan(steps.indexOf('Every area was checked'))
+    expect(workflow('nightly').jobs.night.steps.at(-1).if).toContain('!cancelled()')
+  })
+})
+
 describe('nothing to configure', () => {
   it('no tool reads a settings file of the pipeline', () => {
     for (const file of readdirSync('pipeline/tools')) expect(readFileSync(`pipeline/tools/${file}`, 'utf8'), file).not.toContain('pipeline.json')

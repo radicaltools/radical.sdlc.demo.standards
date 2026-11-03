@@ -110,3 +110,10 @@ jobs:
           else
             gh pr comment bot/nightly-findings --repo "$GITHUB_REPOSITORY" --body-file .agent/report.md
           fi
+      - name: Every area was checked
+        if: ${{ !cancelled() }}
+        run: |
+          if [ -s .agent/not-checked.txt ]; then
+            while read -r area; do echo "::error::Not checked: ${area%%:*}"; done < .agent/not-checked.txt
+            exit 1
+          fi

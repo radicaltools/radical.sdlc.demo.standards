@@ -59,6 +59,8 @@ export function bumpedWorkflow(text, slug, tag) {
   return text.replace(uses, `$1${tag}`)
 }
 
+export const pinTitle = (name, tag) => `Pin ${name} at ${tag}`
+
 /** The text of the pull request. */
 export function pullRequestText({ name, from, to, changes, pipeline }) {
   return [
@@ -111,6 +113,12 @@ if (import.meta.url === pathToFileURL(process.argv[1]).href) {
       console.log(`${dep.name} ${dep.ref}: nothing newer.`)
       continue
     }
+    // A pull request open for this version stays: a push would only start its Gate again.
+    const open = gh('pr', 'list', '--head', `bot/${dep.name}`, '--state', 'open', '--json', 'title', '-q', '.[0].title')
+    if (open === pinTitle(dep.name, tag)) {
+      console.log(`${dep.name}: a pull request for ${tag} is open.`)
+      continue
+    }
     console.log(`${dep.name}: ${dep.ref} to ${tag}.`)
     const slug = slugOf(dep.repo)
     git('checkout', '-q', '-B', `bot/${dep.name}`, base)
@@ -128,14 +136,13 @@ if (import.meta.url === pathToFileURL(process.argv[1]).href) {
       }
     }
     git('add', DEPS, WORKFLOWS)
-    git('commit', '-q', '-m', `Pin ${dep.name} at ${tag}`)
+    git('commit', '-q', '-m', pinTitle(dep.name, tag))
     // One rolling branch per dependency: a newer tag moves the open pull request along.
     git('push', '-q', '--force', remote, `HEAD:refs/heads/bot/${dep.name}`)
-    const title = `Pin ${dep.name} at ${tag}`
+    const title = pinTitle(dep.name, tag)
     const textFile = join(tmpdir(), `pin-${dep.name}.md`)
     writeFileSync(textFile, pullRequestText({ name: dep.name, from: dep.ref, to: tag, changes: modelChanges(dep, tag), pipeline }))
-    const open = gh('pr', 'list', '--head', `bot/${dep.name}`, '--state', 'open', '--json', 'number', '-q', '.[0].number')
-    if (open) gh('pr', 'edit', open, '--title', title, '--body-file', textFile)
+    if (open) gh('pr', 'edit', `bot/${dep.name}`, '--title', title, '--body-file', textFile)
     else gh('pr', 'create', '--base', 'main', '--head', `bot/${dep.name}`, '--title', title, '--body-file', textFile)
     git('checkout', '-q', base)
   }
