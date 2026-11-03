@@ -16,12 +16,10 @@ it depends on, each at a version, and every tool shows them beside its own, read
 MCP server the agents use, and `radical check` in the Gate. Open the Shop's `.radical` in
 [Radical Studio](https://radical.tools) and you see all three; its folder **Landscape** draws them together.
 
-```mermaid
-flowchart LR
-  S[standards] -- "ADRs, fitness functions, sensors, pipeline" --> W[warehouse]
-  S -- "ADRs, fitness functions, sensors, pipeline" --> H[shop]
-  W -- "model, OpenAPI, images" --> H
-```
+![Three lanes, one per repository. The standards hold the decisions and fitness functions, the sensors and the pipeline. The Warehouse and the Shop read each of them at a pinned version: the model, the sensors they run, the pipeline their workflows call. The Shop also reads the Warehouse's model, its OpenAPI descriptions and its images, at a pinned version.](docs/repositories.svg)
+
+Each lane is a repository. An arrow is what one reads from another, always at the version it pins.
+Violet holds the agents.
 
 ## What is here
 
@@ -53,6 +51,8 @@ own pull request, in front of the team that can fix it.
 
 ## How a new version travels
 
+![A person tags the standards. Automation opens a pull request in the Warehouse and in the Shop that moves the pin, and the Gate of each checks that repository against the new version. Each team merges when it can. A tag of the Warehouse then does the same towards the Shop.](docs/new-version.svg)
+
 1. A change merges here and gets a tag, `v1.1.0`.
 2. [`release.yml`](.github/workflows/release.yml) opens a pull request in each system: the pin in its
    `deps.json` moves, and so does the version in its workflows, which `tools/standards.mjs --check`
@@ -68,6 +68,23 @@ The Warehouse's tags work the same way towards the Shop, with its OpenAPI descri
 
 The workflows here have `workflow_call`, and run in the repository that calls them, on its checkout, with
 `.standards/` at the version it pins. It is demo.1's pipeline with one change: it exists once.
+
+A ticket goes in at the top and a deployed commit comes out, and a person acts twice: by giving
+the label and by merging. This is what happens in the Warehouse and in the Shop. Each box names the
+part of Radical it uses.
+
+### During the day
+
+![The whole flow by role: a person opens a ticket, the model agent changes the model and asks if the ticket is unclear, the coding agent builds from get_changes, the Gate decides, the testing agent proposes tests, the pull request is marked ready, a person merges, and it deploys.](docs/sdlc-day.svg)
+
+### Every night
+
+![The night by role: the sensors and the fuzz file measure, an agent per area explores, each finding runs again without the agent, the findings are proposed, a person merges them and starts the agents on one.](docs/sdlc-night.svg)
+
+Yellow is a person, violet an agent on Claude Code, green has no AI and gives the same answer
+every time. The box that stands out is the Gate, the one required check.
+
+### The workflows
 
 | Workflow | Starts on | AI | What it does |
 |---|---|---|---|
