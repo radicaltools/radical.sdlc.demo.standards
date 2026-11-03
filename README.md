@@ -91,6 +91,10 @@ part of Radical it uses.
 Yellow is a person, violet an agent on Claude Code, green has no AI and gives the same answer
 every time. The box that stands out is the Gate, the one required check.
 
+At night each part a repository builds gets an agent of its own: the areas come from the model, one for each element
+`.radical/radical.json` maps that has requirements, and name those requirements. A new service gets its agent with nothing to
+configure, and the brief names what changed in the model since the night before.
+
 ### The workflows
 
 | Workflow | Starts on | AI | What it does |
