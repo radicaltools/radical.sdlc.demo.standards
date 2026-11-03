@@ -205,6 +205,14 @@ describe('the gate and the deploy', () => {
   })
 })
 
+describe('the deploy', () => {
+  it('signs in before the stack pulls the images of another repository', () => {
+    const steps = workflow('deploy').jobs.deploy.steps.map((s) => s.name)
+    expect(steps.indexOf("Sign in to the company's images")).toBeGreaterThanOrEqual(0)
+    expect(steps.indexOf("Sign in to the company's images")).toBeLessThan(steps.indexOf('Start the stack'))
+  })
+})
+
 describe('the files a system calls the pipeline from', () => {
   const CALLERS = ['ci', 'model-and-code', 'testing-agent', 'prepare-for-review', 'deploy', 'nightly', 'release']
   const called = (name) => Object.values(caller(name).jobs)[0]

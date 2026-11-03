@@ -105,3 +105,7 @@ pipeline/setup-github.sh <owner>/<name> Gate       # here
 The script asks for `CLAUDE_CODE_OAUTH_TOKEN` (from `claude setup-token`) and `AGENT_TOKEN`, a fine-grained
 token on all three repositories with Contents, Pull requests, Issues and Workflows: read and write. Tag
 the standards first, and the Warehouse before the Shop, because the Shop's deploy runs the Warehouse's images.
+
+Those images are private, as a company's would be. After the Warehouse's first deploy, open the settings of its
+packages `stock` and `dispatch` on GitHub, and under **Manage Actions access** add the Shop's repository with the role
+Read. The token of the Shop's workflow can then pull them, and nobody else can.
