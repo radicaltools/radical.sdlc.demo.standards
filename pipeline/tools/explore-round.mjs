@@ -13,7 +13,7 @@
 //
 // A summary for the pull request goes to .agent/report.md.
 import { execFileSync, spawn, spawnSync } from 'node:child_process'
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { appendFileSync, existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { modelAreas } from './model-areas.mjs'
@@ -50,6 +50,14 @@ export function confirmedReport(report, verified) {
   return report.slice(0, block.index) + '```json\n' + JSON.stringify(data, null, 2) + '\n```' + report.slice(block.index + block[0].length)
 }
 
+/** The line of an area in the round's report. An agent that ran no script checked nothing,
+ *  whatever it says, so that is never reported as nothing found. */
+export function areaLine({ area, scripts, kept, dropped, refused }) {
+  if (!scripts) return { checked: false, line: `- **${area}**: NOT CHECKED. The agent left no script${refused ? `, and ${refused} of its calls were refused` : ''}.` }
+  const found = kept.length ? kept.join('; ') : 'nothing that held up when run again'
+  return { checked: true, line: `- **${area}**: ${found}${dropped ? ` (${dropped} did not hold up)` : ''}.` }
+}
+
 async function serve(ports) {
   const { serve: parts } = JSON.parse(readFileSync('.radical/crucible/crucible.json', 'utf8')).explore
   const servers = serveCommands(parts, ports).map(({ cwd, command: [program, ...args] }) => spawn(program, args, { cwd, stdio: 'ignore' }))
@@ -73,13 +81,15 @@ if (import.meta.url === pathToFileURL(process.argv[1]).href) {
   console.log(prepared)
   const folder = prepared.match(/ in (\S+):/)[1]
   const lines = []
+  const notChecked = []
   for (const { run, area, folder: runFolder, ports } of JSON.parse(readFileSync(join(folder, 'round.json'), 'utf8')).runs) {
     const stop = await serve(ports)
     const reportFile = join(runFolder, 'REPORT.md')
     const agent = spawnSync('node', ['.standards/pipeline/tools/run-agent.mjs', 'explore-agent', `prompt=${join(runFolder, 'PROMPT.md')}`, '--report', reportFile], { stdio: 'inherit' })
     await stop()
     if (agent.status !== 0) {
-      lines.push(`- **${area}**: the agent did not finish.`)
+      lines.push(`- **${area}**: NOT CHECKED. The agent did not finish.`)
+      notChecked.push(area)
       continue
     }
     const report = readFileSync(reportFile, 'utf8')
@@ -90,9 +100,17 @@ if (import.meta.url === pathToFileURL(process.argv[1]).href) {
     writeFileSync(reportFile, kept)
     if (findingsOf(kept).length) spawnSync('npx', ['radical', 'explore', 'record', reportFile], { stdio: 'inherit' })
     const titles = findingsOf(kept).map((f) => f.title)
-    lines.push(`- **${area}**: ${titles.length ? titles.join('; ') : 'nothing that held up when run again'}${findingsOf(report).length > titles.length ? ` (${findingsOf(report).length - titles.length} did not hold up)` : ''}.`)
+    const written = readdirSync(runFolder).filter((name) => /\.m?js$/.test(name)).length
+    const denialsFile = `${reportFile}.denials.json`
+    const refused = existsSync(denialsFile) ? JSON.parse(readFileSync(denialsFile, 'utf8')).length : 0
+    const { checked, line } = areaLine({ area, scripts: written, kept: titles, dropped: findingsOf(report).length - titles.length, refused })
+    if (!checked) notChecked.push(area)
+    lines.push(line)
   }
   mkdirSync('.agent', { recursive: true })
   writeFileSync('.agent/report.md', `## Exploratory round\n\n${lines.join('\n')}\n`)
   console.log(lines.join('\n'))
+  if (process.env.GITHUB_STEP_SUMMARY) appendFileSync(process.env.GITHUB_STEP_SUMMARY, `## Exploratory round\n\n${lines.join('\n')}\n`)
+  // Read by the last step of the night, after the findings are proposed.
+  writeFileSync('.agent/not-checked.txt', notChecked.join('\n'))
 }

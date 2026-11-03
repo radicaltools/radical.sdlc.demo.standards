@@ -34,13 +34,14 @@ export function readResult(stdout, name) {
   try {
     run = JSON.parse(stdout)
   } catch {
-    return { failed: true, report: stdout, cost: `${name}: no result` }
+    return { failed: true, report: stdout, cost: `${name}: no result`, denials: [] }
   }
   const usage = run.usage ?? {}
   const tokens = (usage.input_tokens ?? 0) + (usage.cache_creation_input_tokens ?? 0) + (usage.cache_read_input_tokens ?? 0)
   const models = Object.keys(run.modelUsage ?? {}).join(', ') || 'unknown model'
   const cost = `${name}: ${models}, ${run.num_turns ?? '?'} turns, ${tokens} input and ${usage.output_tokens ?? 0} output tokens, $${(run.total_cost_usd ?? 0).toFixed(3)}`
-  return { failed: Boolean(run.is_error) || typeof run.result !== 'string', report: run.result ?? `The agent stopped: ${run.subtype ?? 'no result'}.`, cost }
+  const denials = (run.permission_denials ?? []).map(({ tool_name: tool, tool_input: input }) => ({ tool, target: input?.file_path ?? input?.command ?? JSON.stringify(input ?? {}) }))
+  return { failed: Boolean(run.is_error) || typeof run.result !== 'string', report: run.result ?? `The agent stopped: ${run.subtype ?? 'no result'}.`, cost, denials }
 }
 
 if (import.meta.url === pathToFileURL(process.argv[1]).href) {
@@ -57,6 +58,9 @@ if (import.meta.url === pathToFileURL(process.argv[1]).href) {
   writeFileSync(report, result.report)
   console.log(result.report)
   console.log(result.cost)
+  // What the allow-list refused, so a run that could not work says why.
+  for (const { tool, target } of result.denials) console.log(`Refused: ${tool} ${String(target).slice(0, 300)}`)
+  writeFileSync(`${report}.denials.json`, JSON.stringify(result.denials, null, 2))
   if (process.env.GITHUB_STEP_SUMMARY) appendFileSync(process.env.GITHUB_STEP_SUMMARY, `${result.cost}\n`)
   if (run.error) console.error(run.error.message)
   process.exit(run.status || (result.failed ? 1 : 0))

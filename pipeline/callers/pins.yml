@@ -15,5 +15,5 @@ permissions:
 
 jobs:
   pins:
-    uses: radicaltools/radical.tools.sdlc.demo.2.standards/.github/workflows/update-pins.yml@v1.0.4
+    uses: radicaltools/radical.tools.sdlc.demo.2.standards/.github/workflows/update-pins.yml@v1.0.5
     secrets: inherit

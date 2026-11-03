@@ -66,7 +66,7 @@ describe('agent result', () => {
   })
   it('reads the report and what it cost', () => {
     const result = readResult(JSON.stringify({ result: 'Done', is_error: false, num_turns: 4, total_cost_usd: 0.1234, usage: { input_tokens: 10, cache_read_input_tokens: 90, output_tokens: 5 }, modelUsage: { 'claude-haiku-5-5': {} } }), 'coding-agent')
-    expect(result).toEqual({ failed: false, report: 'Done', cost: 'coding-agent: claude-haiku-5-5, 4 turns, 100 input and 5 output tokens, $0.123' })
+    expect(result).toEqual({ failed: false, report: 'Done', cost: 'coding-agent: claude-haiku-5-5, 4 turns, 100 input and 5 output tokens, $0.123', denials: [] })
   })
   it('fails a run that hit its limit of turns', () => {
     const result = readResult(JSON.stringify({ subtype: 'error_max_turns', is_error: false }), 'coding-agent')
@@ -207,5 +207,18 @@ describe('nightly findings', () => {
   })
   it('says nothing an open finding says already', () => {
     expect(nightlyFindings(check, [{ name: 'F-0001.md', text: 'status: "open"\nsignature: "sense|fitness-fn-failed|n1"' }], options)).toEqual([])
+  })
+})
+
+describe('what a run reports', () => {
+  it('says what the allow-list refused', () => {
+    const { denials } = readResult(JSON.stringify({ result: 'done', permission_denials: [
+      { tool_name: 'Write', tool_input: { file_path: '/x/a.mjs' } },
+      { tool_name: 'Bash', tool_input: { command: 'mkdir y' } },
+    ] }), 'explore-agent')
+    expect(denials).toEqual([{ tool: 'Write', target: '/x/a.mjs' }, { tool: 'Bash', target: 'mkdir y' }])
+  })
+  it('has none on a run with no result', () => {
+    expect(readResult('not json', 'explore-agent').denials).toEqual([])
   })
 })
