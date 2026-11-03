@@ -139,7 +139,6 @@ jobs:
       - name: Model agent
         if: steps.task.outputs.mode != 'fix'
         env:
-          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           AGENT_MODEL: ${{ vars.AGENT_MODEL }}
           SOURCE: ${{ steps.task.outputs.source }}
@@ -170,7 +169,6 @@ jobs:
       - name: Coding agent
         if: steps.task.outputs.mode != 'change' || steps.model.outputs.changed == 'true'
         env:
-          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           AGENT_MODEL: ${{ vars.AGENT_MODEL }}
           MODE: ${{ steps.task.outputs.mode }}

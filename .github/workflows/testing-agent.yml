@@ -64,7 +64,6 @@ jobs:
           claude: 'true'
       - name: Testing agent
         env:
-          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           AGENT_MODEL: ${{ vars.AGENT_MODEL }}
           BRANCH: ${{ github.head_ref }}

@@ -129,7 +129,7 @@ pipeline/setup-github.sh <owner>/<name> Gate       # here
 .standards/pipeline/setup-github.sh <owner>/<name> "checks / Gate"   # in a system, after npm run standards
 ```
 
-The script asks for `CLAUDE_CODE_OAUTH_TOKEN` (from `claude setup-token`) and `AGENT_TOKEN`, a fine-grained
+The script asks for `ANTHROPIC_API_KEY`, from the [Claude Console](https://platform.claude.com), and `AGENT_TOKEN`, a fine-grained
 token on that repository alone with Contents, Pull requests, Issues and Workflows: read and write. No repository needs
 to write to another. Tag
 the standards first, and the Warehouse before the Shop, because the Shop's deploy runs the Warehouse's images.
