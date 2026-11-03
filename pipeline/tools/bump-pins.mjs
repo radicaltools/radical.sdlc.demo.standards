@@ -42,6 +42,10 @@ if (import.meta.url === pathToFileURL(process.argv[1]).href) {
     const git = (...args) => execFileSync('git', ['-C', dir, ...args], { stdio: 'inherit' })
     try {
       execFileSync('git', ['clone', '-q', '--depth', '1', `https://x-access-token:${token}@github.com/${consumer}.git`, dir], { stdio: 'inherit' })
+      if (!existsSync(join(dir, DEPS))) {
+        console.log(`${consumer} has no ${DEPS} yet.`)
+        continue
+      }
       const deps = bumpedDeps(readFileSync(join(dir, DEPS), 'utf8'), name, tag)
       if (!deps) {
         console.log(`${consumer} needs nothing for ${name} ${tag}.`)
