@@ -7,14 +7,16 @@
 //
 //   node .standards/pipeline/tools/explore-round.mjs
 //
-// The repository says what to explore in .github/pipeline.json, and what to serve in
-// .radical/crucible/crucible.json.
+// What to explore comes from the model (model-areas.mjs), and what to serve from
+// .radical/crucible/crucible.json. A runner starts with no earlier round, so the brief is told
+// to compare with the commit of a day ago, and names what changed in the model since.
 //
 // A summary for the pull request goes to .agent/report.md.
 import { execFileSync, spawn, spawnSync } from 'node:child_process'
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { pathToFileURL } from 'node:url'
+import { modelAreas } from './model-areas.mjs'
 
 /** The commands of crucible.json's explore.serve on a run's ports, each { cwd, command }. */
 export function serveCommands(serve, ports) {
@@ -61,8 +63,13 @@ async function serve(ports) {
 }
 
 if (import.meta.url === pathToFileURL(process.argv[1]).href) {
-  const { areas: AREAS } = JSON.parse(readFileSync('.github/pipeline.json', 'utf8'))
-  const prepared = execFileSync('npx', ['radical', 'explore', 'prepare', '--runs', String(AREAS.length), '--areas', AREAS.join('; ')], { encoding: 'utf8' })
+  const AREAS = await modelAreas()
+  if (!AREAS.length) {
+    console.error('No area: nothing this repository maps in .radical/radical.json has requirements.')
+    process.exit(2)
+  }
+  const dayAgo = execFileSync('git', ['rev-list', '-1', '--before=24 hours ago', 'HEAD'], { encoding: 'utf8' }).trim()
+  const prepared = execFileSync('npx', ['radical', 'explore', 'prepare', '--runs', String(AREAS.length), '--areas', AREAS.join('; '), ...(dayAgo ? ['--since', dayAgo] : [])], { encoding: 'utf8' })
   console.log(prepared)
   const folder = prepared.match(/ in (\S+):/)[1]
   const lines = []

@@ -248,6 +248,13 @@ describe('the files a system calls the pipeline from', () => {
   })
 })
 
+describe('nothing to configure', () => {
+  it('no tool reads a settings file of the pipeline', () => {
+    for (const file of readdirSync('pipeline/tools')) expect(readFileSync(`pipeline/tools/${file}`, 'utf8'), file).not.toContain('pipeline.json')
+    for (const file of readdirSync('.github/workflows')) expect(readFileSync(`.github/workflows/${file}`, 'utf8'), file).not.toContain('pipeline.json')
+  })
+})
+
 describe('new versions', () => {
   it('are looked for on a schedule and by hand, by the repository that depends on them', () => {
     const { on } = caller('pins')
