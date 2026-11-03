@@ -1,4 +1,0 @@
-{
-  "name": "standards",
-  "consumers": ["radicaltools/radical.tools.sdlc.demo.2.warehouse", "radicaltools/radical.tools.sdlc.demo.2.shop"]
-}

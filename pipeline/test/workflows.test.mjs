@@ -1,5 +1,5 @@
 // The rules of the workflows that nothing else would notice being broken.
-import { readFileSync } from 'node:fs'
+import { readFileSync, readdirSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import { parse } from 'yaml'
 import { AGENTS } from '../tools/agents.mjs'
@@ -214,7 +214,7 @@ describe('the deploy', () => {
 })
 
 describe('the files a system calls the pipeline from', () => {
-  const CALLERS = ['ci', 'model-and-code', 'testing-agent', 'prepare-for-review', 'deploy', 'nightly', 'release', 'pins']
+  const CALLERS = ['ci', 'model-and-code', 'testing-agent', 'prepare-for-review', 'deploy', 'nightly', 'pins']
   const called = (name) => Object.values(caller(name).jobs)[0]
   it.each(CALLERS)('%s calls a workflow that exists, at a version', (name) => {
     const uses = called(name).uses
@@ -258,5 +258,11 @@ describe('new versions', () => {
     const steps = workflow('update-pins').jobs.pins.steps
     expect(steps.map((s) => s.run ?? '').join('\n')).not.toContain('run-agent')
     expect(steps.find((s) => s.uses?.startsWith('actions/checkout')).with['persist-credentials']).toBe(false)
+  })
+  it('this repository has nothing that runs on a tag: it does not know who uses it', () => {
+    for (const file of readdirSync('.github/workflows')) {
+      const { on } = parse(readFileSync(`.github/workflows/${file}`, 'utf8'))
+      expect(on.push?.tags, file).toBeUndefined()
+    }
   })
 })
