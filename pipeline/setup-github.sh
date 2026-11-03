@@ -8,7 +8,8 @@
 # The check of the standards is "Gate"; a system's, through a reusable workflow, "checks / Gate".
 #
 # Asks for two secrets:
-#   CLAUDE_CODE_OAUTH_TOKEN  from `claude setup-token`
+#   ANTHROPIC_API_KEY        a key from the Claude Console. Automated runs use an API key, not a
+#                            subscription
 #   AGENT_TOKEN              a fine-grained token on this repository, with Contents,
 #                            Pull requests, Issues and Workflows: read and write
 set -euo pipefail
@@ -20,7 +21,7 @@ gh label create agent:implement --repo "$repo" --color 5319e7 --description "The
 gh label create agent:fix --repo "$repo" --color d93f0b --description "The coding agent fixes this pull request" --force
 gh label create agent:question --repo "$repo" --color fbca04 --description "An agent is waiting for an answer" --force
 
-for name in CLAUDE_CODE_OAUTH_TOKEN AGENT_TOKEN; do
+for name in ANTHROPIC_API_KEY AGENT_TOKEN; do
   read -r -s -p "$name: " value; echo
   printf '%s' "$value" | gh secret set "$name" --repo "$repo"
 done

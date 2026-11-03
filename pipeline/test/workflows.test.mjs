@@ -17,10 +17,10 @@ describe('agents in the workflows', () => {
     const steps = stepsOf(workflow(name).jobs[job])
     for (const s of steps.filter((s) => s.uses?.startsWith('actions/checkout'))) expect(s.with['persist-credentials']).toBe(false)
   })
-  it.each(WITH_AGENTS)('%s: the agent step holds only the Claude credential', (name, job) => {
+  it.each(WITH_AGENTS)('%s: the agent step holds only the Claude API key', (name, job) => {
     const steps = agentSteps(workflow(name).jobs[job])
     expect(steps.length).toBeGreaterThan(0)
-    for (const step of steps) expect(Object.keys(step.env).filter((k) => /TOKEN|KEY/.test(k)).sort()).toEqual(['ANTHROPIC_API_KEY', 'CLAUDE_CODE_OAUTH_TOKEN'])
+    for (const step of steps) expect(Object.keys(step.env).filter((k) => /TOKEN|KEY/.test(k)).sort()).toEqual(['ANTHROPIC_API_KEY'])
     expect(JSON.stringify(workflow(name).jobs[job].env ?? {})).not.toMatch(/secrets\./)
   })
   it('no text of an issue or pull request is written into a script', () => {

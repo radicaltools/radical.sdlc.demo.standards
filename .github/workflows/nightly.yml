@@ -91,7 +91,6 @@ jobs:
           retention-days: 90
       - name: Exploratory round
         env:
-          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           AGENT_MODEL: ${{ vars.AGENT_MODEL }}
         run: node .standards/pipeline/tools/explore-round.mjs

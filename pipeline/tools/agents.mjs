@@ -63,11 +63,11 @@ export function agentOfAuthor(author) {
 }
 
 /** The environment an agent runs in: without anything that could push or call
- *  another service. The Claude credential stays, when it is set. */
+ *  another service. The Claude API key stays, when it is set. */
 export function agentEnvironment(env) {
   const kept = {}
   for (const [key, value] of Object.entries(env)) {
-    if (/^(CLAUDE_CODE_OAUTH_TOKEN|ANTHROPIC_API_KEY)$/.test(key)) { if (value) kept[key] = value; continue }
+    if (key === 'ANTHROPIC_API_KEY') { if (value) kept[key] = value; continue }
     if (/TOKEN|SECRET|PASSWORD|CREDENTIAL|_KEY$/i.test(key)) continue
     kept[key] = value
   }

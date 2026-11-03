@@ -33,7 +33,7 @@ describe('agent scope', () => {
 describe('agent run', () => {
   it('keeps only the Claude credential', () => {
     expect(agentEnvironment({ PATH: '/bin', GH_TOKEN: 'x', AGENT_TOKEN: 'y', GITHUB_TOKEN: 'z', AWS_SECRET_ACCESS_KEY: 'q', CLAUDE_CODE_OAUTH_TOKEN: 'c', ANTHROPIC_API_KEY: '' }))
-      .toEqual({ PATH: '/bin', CLAUDE_CODE_OAUTH_TOKEN: 'c' })
+      .toEqual({ PATH: '/bin' })
   })
   it('starts the skill with its allow-list', () => {
     const args = claudeArguments('testing-agent', ['base=main'], 'm')
@@ -228,5 +228,11 @@ describe('path rules', () => {
     for (const [name, { tools }] of Object.entries(AGENTS)) {
       for (const rule of tools.filter((tool) => /^(Edit|Write)\(/.test(tool))) expect(rule, name).toMatch(/^(Edit|Write)\(\//)
     }
+  })
+})
+
+describe('the credential of an agent', () => {
+  it('is an API key, and a subscription token does not reach it', () => {
+    expect(agentEnvironment({ ANTHROPIC_API_KEY: 'k', CLAUDE_CODE_OAUTH_TOKEN: 'c' })).toEqual({ ANTHROPIC_API_KEY: 'k' })
   })
 })
