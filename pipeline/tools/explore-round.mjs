@@ -7,8 +7,8 @@
 //
 //   node .standards/pipeline/tools/explore-round.mjs
 //
-// The repository says what to serve and explore in .radical/pipeline.json, and serves each
-// part with its own tools/serve-for-explore.mjs.
+// The repository says what to explore in .github/pipeline.json, and what to serve in
+// .radical/crucible/crucible.json.
 //
 // A summary for the pull request goes to .agent/report.md.
 import { execFileSync, spawn, spawnSync } from 'node:child_process'
@@ -16,7 +16,12 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { pathToFileURL } from 'node:url'
 
-const { serve: PARTS, areas: AREAS } = JSON.parse(readFileSync('.radical/pipeline.json', 'utf8'))
+/** The commands of crucible.json's explore.serve on a run's ports, each { cwd, command }. */
+export function serveCommands(serve, ports) {
+  const fill = (word, entry) => word.replace('{port}', ports[entry.port]).replace('{hubPort}', ports.hub).replace('{otherPort}', ports.other)
+  return serve.map((entry) => ({ cwd: entry.cwd, command: entry.command.map((word) => fill(word, entry)) }))
+}
+
 const JSON_BLOCK = /```json\s*\n([\s\S]*?)\n```/g
 const PROBLEM_SHOWN = 3
 const isScriptName = (script) => /^[\w.-]+\.m?js$/.test(script ?? '')
@@ -44,8 +49,8 @@ export function confirmedReport(report, verified) {
 }
 
 async function serve(ports) {
-  const servers = PARTS.map((service) =>
-    spawn('node', ['tools/serve-for-explore.mjs', service, String(ports.app), String(ports.hub), String(ports.other)], { stdio: 'ignore' }))
+  const { serve: parts } = JSON.parse(readFileSync('.radical/crucible/crucible.json', 'utf8')).explore
+  const servers = serveCommands(parts, ports).map(({ cwd, command: [program, ...args] }) => spawn(program, args, { cwd, stdio: 'ignore' }))
   for (const port of Object.values(ports)) {
     for (let tries = 0; tries < 60; tries++) {
       if (await fetch(`http://localhost:${port}/health`).then((r) => r.ok, () => false)) break
@@ -56,6 +61,7 @@ async function serve(ports) {
 }
 
 if (import.meta.url === pathToFileURL(process.argv[1]).href) {
+  const { areas: AREAS } = JSON.parse(readFileSync('.github/pipeline.json', 'utf8'))
   const prepared = execFileSync('npx', ['radical', 'explore', 'prepare', '--runs', String(AREAS.length), '--areas', AREAS.join('; ')], { encoding: 'utf8' })
   console.log(prepared)
   const folder = prepared.match(/ in (\S+):/)[1]

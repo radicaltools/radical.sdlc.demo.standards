@@ -10,7 +10,8 @@ share. README.md says how the three repositories fit together.
   here works for any repository: nothing in it names a system.
 - `pipeline/` and `.github/workflows/` (those with `workflow_call`) are the pipeline. Systems call
   them from the small files in `pipeline/callers/`, at a version.
-- A release is a tag `vX.Y.Z`. It opens a pull request in each system with the new version, and
-  their Gate says whether they hold against it. A change that would turn a system's Gate red is
-  a major version, and the note in its release says what to do.
+- A release is a tag `vX.Y.Z`, and it runs nothing here: this repository does not know who uses it.
+  Each repository that depends on it finds the tag itself and opens a pull request of its own, and its
+  Gate says whether it holds against the new version. A change that would turn a Gate red is a major
+  version, and the note in its release says what to do.
 - Before pushing: `npm test` and `npx radical check .radical/model`.

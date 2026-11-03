@@ -214,7 +214,7 @@ describe('the deploy', () => {
 })
 
 describe('the files a system calls the pipeline from', () => {
-  const CALLERS = ['ci', 'model-and-code', 'testing-agent', 'prepare-for-review', 'deploy', 'nightly', 'release']
+  const CALLERS = ['ci', 'model-and-code', 'testing-agent', 'prepare-for-review', 'deploy', 'nightly', 'release', 'pins']
   const called = (name) => Object.values(caller(name).jobs)[0]
   it.each(CALLERS)('%s calls a workflow that exists, at a version', (name) => {
     const uses = called(name).uses
@@ -226,7 +226,7 @@ describe('the files a system calls the pipeline from', () => {
     expect(called(name).secrets).toBe('inherit')
   })
   it('a job permission a workflow asks for is one its caller grants', () => {
-    for (const [name, file] of [['ci', 'gate'], ['model-and-code', 'model-and-code'], ['testing-agent', 'testing-agent'], ['prepare-for-review', 'prepare-for-review'], ['deploy', 'deploy'], ['nightly', 'nightly']]) {
+    for (const [name, file] of [['ci', 'gate'], ['model-and-code', 'model-and-code'], ['testing-agent', 'testing-agent'], ['prepare-for-review', 'prepare-for-review'], ['deploy', 'deploy'], ['nightly', 'nightly'], ['pins', 'update-pins']]) {
       const granted = caller(name).permissions
       const asked = [workflow(file).permissions ?? {}, ...Object.values(workflow(file).jobs).map((j) => j.permissions ?? {})]
       for (const set of asked) {
@@ -238,12 +238,25 @@ describe('the files a system calls the pipeline from', () => {
     }
   })
   it('a reusable workflow fetches the standards before it uses them', () => {
-    for (const file of ['gate', 'model-and-code', 'testing-agent', 'prepare-for-review', 'deploy', 'nightly']) {
+    for (const file of ['gate', 'model-and-code', 'testing-agent', 'prepare-for-review', 'deploy', 'nightly', 'update-pins']) {
       for (const job of Object.values(workflow(file).jobs)) {
         const runs = job.steps.map((s) => `${s.uses ?? ''} ${s.run ?? ''}`)
         const first = runs.findIndex((r) => r.includes('.standards/'))
         if (first >= 0) expect(runs.slice(0, first).join('\n'), `${file}`).toContain('node tools/standards.mjs')
       }
     }
+  })
+})
+
+describe('new versions', () => {
+  it('are looked for on a schedule and by hand, by the repository that depends on them', () => {
+    const { on } = caller('pins')
+    expect(on.schedule).toHaveLength(1)
+    expect(on).toHaveProperty('workflow_dispatch')
+  })
+  it('run no agent, and no agent runs with the token that pushes them', () => {
+    const steps = workflow('update-pins').jobs.pins.steps
+    expect(steps.map((s) => s.run ?? '').join('\n')).not.toContain('run-agent')
+    expect(steps.find((s) => s.uses?.startsWith('actions/checkout')).with['persist-credentials']).toBe(false)
   })
 })

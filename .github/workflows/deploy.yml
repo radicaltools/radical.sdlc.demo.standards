@@ -51,7 +51,7 @@ jobs:
       - name: Publish the images
         run: |
           # Only this repository's services: the other systems' images are theirs.
-          docker compose push $(node -p "require('./.radical/pipeline.json').services.join(' ')")
+          docker compose push $(node -p "require('./.github/pipeline.json').services.join(' ')")
       - name: Stop the stack
         if: always()
         run: docker compose down
