@@ -6,8 +6,9 @@ name: Reconcile
 
 # The model on main is the state wanted, and .radical/reconciled.json the commit of it that the
 # code has reached. Whatever started this run, it reads the gap between the two: with one, the coding
-# agent proposes the code in a pull request, or a person gets a ticket saying why it could not.
-# Nothing here merges. The merge moves the file, and the next run looks again.
+# agent proposes the code in a pull request, a person gets a ticket saying why it could not, or the
+# work goes to the system that has to change. Nothing here merges. The merge moves the file, and the
+# next run looks again. A pin reaching main is a change of the model, so it starts a run too.
 #
 # The agent step holds only the Claude credential. The steps after it run no AI: they commit under
 # the agent's name and push with AGENT_TOKEN, because a push made with GITHUB_TOKEN would start no gate.
@@ -81,15 +82,18 @@ jobs:
           AUTOMATION: ${{ vars.AGENT_AUTOMATION }}
           BRANCH: ${{ steps.look.outputs.branch }}
           DESIRED: ${{ steps.look.outputs.desired }}
+          CLOSES: ${{ steps.look.outputs.closes }}
         run: |
+          for ticket in $CLOSES; do printf '\n\nCloses #%s\n' "$ticket" >> .agent/report.md; done
           git push --force "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "HEAD:refs/heads/$BRANCH"
           # With AGENT_AUTOMATION it stays a draft until the agents are done (.standards/pipeline/tools/prepare-for-review.mjs).
           draft=""
           if [ "$AUTOMATION" = "true" ]; then draft="--draft"; fi
           gh pr create --repo "$GITHUB_REPOSITORY" --base main --head "$BRANCH" --title "Implement the model at ${DESIRED:0:7}" --body-file .agent/report.md $draft
-      - name: A person reads why not
+      - name: A person reads why not, or the work is handed on
         if: steps.outcome.outputs.act == 'ask'
         env:
           GH_TOKEN: ${{ secrets.AGENT_TOKEN }}
+          DELEGATE_TOKEN: ${{ secrets.DELEGATE_TOKEN }}
           DESIRED: ${{ steps.look.outputs.desired }}
         run: node .standards/pipeline/tools/reconcile.mjs stuck "$DESIRED" .agent/report.md
