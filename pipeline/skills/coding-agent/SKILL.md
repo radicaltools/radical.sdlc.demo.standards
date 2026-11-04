@@ -22,7 +22,9 @@ Services call each other over HTTP only, and share only the types in `packages/`
 
 The model has elements of other models too, which come from `.radical/model/deps.json`:
 the company's standards and other systems. They are read-only, and live in other
-repositories. A call to another system follows its OpenAPI description at the pinned version.
+repositories. A call to another system follows its OpenAPI description at the pinned version, which
+is in `.agent/providers/<name>-pinned/`, with `.agent/providers/<name>/` as it is now. Git ignores
+that folder, so read its files by path: a search does not find them, and you cannot fetch anything.
 If the model asks for what that version does not have, never work around it: build nothing, and end
 your report with a section headed exactly `## Delegate to <name>`, where `<name>` is that dependency
 in `.radical/model/deps.json`, saying what is needed in that system's terms. The workflow opens the

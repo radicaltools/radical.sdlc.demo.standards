@@ -5,7 +5,7 @@ import { join, resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { parse } from 'yaml'
 import { MAX_DEPTH, MAX_TICKETS, depthOf, planDelegations, verdict, waitingOn, wakeAction } from '../tools/delegate.mjs'
-import { briefOf, delegationsIn, hasModelQuestions } from '../tools/questions.mjs'
+import { briefOf, delegationsIn, hasModelQuestions, whyStopped } from '../tools/questions.mjs'
 
 const BOT = { login: 'github-actions[bot]' }
 const note = (name, number, done = false) => ({ user: BOT, body: `<!-- delegation${done ? '-done' : ''} ${name} ${number} -->\ntext` })
@@ -26,6 +26,15 @@ describe('what a report hands on', () => {
   it('counts as model questions, so a pull request with one does not go further', () => {
     expect(hasModelQuestions('## Delegate to warehouse\n\nTake goods back.')).toBe(true)
     expect(hasModelQuestions('## Delegate to warehouse\n\nNone.')).toBe(false)
+  })
+})
+
+describe('when the agents stop', () => {
+  it('a person reads their questions', () => {
+    expect(whyStopped('Built nothing.\n\n## Model questions\n\nWhich status?')).toBe('Which status?')
+  })
+  it('a person reads the whole report when it asks nothing', () => {
+    expect(whyStopped('I could not read the Warehouse, so I built nothing.\n')).toBe('I could not read the Warehouse, so I built nothing.')
   })
 })
 
