@@ -232,7 +232,8 @@ jobs:
           # A run that pushes nothing never stops in silence: it hands work on, or a person reads why.
           report=.agent/report.md
           [ -f "$report" ] || report=.agent/model-report.md
-          if ! node .standards/pipeline/tools/questions.mjs has "Model questions" "$report" && node .standards/pipeline/tools/delegate.mjs has "$report"; then
+          # Handing on comes first: a question can wait until the agents start again, the other repository cannot.
+          if node .standards/pipeline/tools/delegate.mjs has "$report"; then
             node .standards/pipeline/tools/delegate.mjs open "$ISSUE" "$report"
           else
             node .standards/pipeline/tools/questions.mjs ask "$ISSUE" "$report" "$ROUNDS"
