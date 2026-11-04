@@ -129,6 +129,39 @@ describe('model agent and coding agent', () => {
   })
 })
 
+describe('work for another repository', () => {
+  const steps = () => workflow('model-and-code').jobs.code.steps
+  const at = (name) => steps().findIndex((s) => s.name === name)
+  const step = (name) => steps().find((s) => s.name === name)
+  it('stops the run before anything is committed', () => {
+    expect(at('Model agent')).toBeLessThan(at('Did it hand the work on'))
+    expect(at('Did it hand the work on')).toBeLessThan(at('Hand the work on'))
+    expect(at('Hand the work on')).toBeLessThan(at('Commit the model'))
+    expect(step('Did it hand the work on').run).toContain('git checkout -- .radical/model')
+    expect(step('Commit the model').if).toContain("steps.delegated.outputs.delegated != 'true'")
+  })
+  it('asks first: with questions in the report, nothing is handed on', () => {
+    expect(step('Did it hand the work on').if).toContain("steps.asked.outputs.asked != 'true'")
+  })
+  it('the token for the other repository reaches only the steps with no AI', () => {
+    const holding = steps().filter((s) => s.env?.DELEGATE_TOKEN).map((s) => s.name)
+    expect(holding).toEqual(['Hand the work on', 'Hand the model questions back'])
+    for (const name of holding) expect(step(name).run).not.toMatch(/run-agent|explore-round/)
+  })
+  it('the agents read what the dependencies have now before they decide', () => {
+    expect(at('What the other repositories have now')).toBeLessThan(at('Model agent'))
+  })
+  it('waking a ticket uses the token that starts a workflow, with no AI in the job', () => {
+    const job = workflow('waiting-tickets').jobs.wake
+    const run = job.steps.find((s) => s.run?.includes('delegate.mjs wake'))
+    expect(run.env.AGENT_TOKEN).toBe('${{ secrets.AGENT_TOKEN }}')
+    expect(JSON.stringify(job)).not.toMatch(/ANTHROPIC|run-agent/)
+  })
+  it('a pin that reaches main looks at the waiting tickets straight away', () => {
+    expect(caller('waiting').on.push.paths).toEqual(['.radical/model/deps.json'])
+  })
+})
+
 describe('fixing a finding', () => {
   const skill = () => readFileSync('pipeline/skills/coding-agent/SKILL.md', 'utf8')
   it('turns a finding of the fuzz file into a test through radical harden', () => {
@@ -214,7 +247,7 @@ describe('the deploy', () => {
 })
 
 describe('the files a system calls the pipeline from', () => {
-  const CALLERS = ['ci', 'model-and-code', 'testing-agent', 'prepare-for-review', 'deploy', 'nightly', 'pins']
+  const CALLERS = ['ci', 'model-and-code', 'testing-agent', 'prepare-for-review', 'deploy', 'nightly', 'pins', 'waiting']
   const called = (name) => Object.values(caller(name).jobs)[0]
   it.each(CALLERS)('%s calls a workflow that exists, at a version', (name) => {
     const uses = called(name).uses
@@ -226,7 +259,7 @@ describe('the files a system calls the pipeline from', () => {
     expect(called(name).secrets).toBe('inherit')
   })
   it('a job permission a workflow asks for is one its caller grants', () => {
-    for (const [name, file] of [['ci', 'gate'], ['model-and-code', 'model-and-code'], ['testing-agent', 'testing-agent'], ['prepare-for-review', 'prepare-for-review'], ['deploy', 'deploy'], ['nightly', 'nightly'], ['pins', 'update-pins']]) {
+    for (const [name, file] of [['waiting', 'waiting-tickets'], ['ci', 'gate'], ['model-and-code', 'model-and-code'], ['testing-agent', 'testing-agent'], ['prepare-for-review', 'prepare-for-review'], ['deploy', 'deploy'], ['nightly', 'nightly'], ['pins', 'update-pins']]) {
       const granted = caller(name).permissions
       const asked = [workflow(file).permissions ?? {}, ...Object.values(workflow(file).jobs).map((j) => j.permissions ?? {})]
       for (const set of asked) {
@@ -238,7 +271,7 @@ describe('the files a system calls the pipeline from', () => {
     }
   })
   it('a reusable workflow fetches the standards before it uses them', () => {
-    for (const file of ['gate', 'model-and-code', 'testing-agent', 'prepare-for-review', 'deploy', 'nightly', 'update-pins']) {
+    for (const file of ['gate', 'model-and-code', 'testing-agent', 'prepare-for-review', 'deploy', 'nightly', 'update-pins', 'waiting-tickets']) {
       for (const job of Object.values(workflow(file).jobs)) {
         const runs = job.steps.map((s) => `${s.uses ?? ''} ${s.run ?? ''}`)
         const first = runs.findIndex((r) => r.includes('.standards/'))

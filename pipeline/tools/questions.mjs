@@ -23,14 +23,21 @@ export const MARKER = '<!-- model-agent-questions -->'
 export const MAX_ROUNDS = 2
 export const mayWrite = (permission) => permission === 'admin' || permission === 'write'
 
-const isQuestion = (comment) => comment.user?.login === 'github-actions[bot]' && comment.body?.startsWith(MARKER)
+const fromWorkflow = (comment) => comment.user?.login === 'github-actions[bot]'
+const isQuestion = (comment) => fromWorkflow(comment) && comment.body?.startsWith(MARKER)
+/** What the workflow says on a ticket about work it handed to another repository (delegate.mjs). */
+export const isNote = (comment) => fromWorkflow(comment) && comment.body?.startsWith('<!-- delegation')
 export const roundsOf = (comments) => comments.filter(isQuestion).length
 
 /** The ticket, and the conversation on it that can be trusted: `trusted` says it
  *  of a login. */
 export function briefOf(title, body, comments, trusted) {
-  const said = comments.filter((c) => isQuestion(c) || (c.user?.login && trusted(c.user.login)))
-    .map((c) => (isQuestion(c) ? `The agents asked:\n\n${c.body.slice(MARKER.length).trim()}` : `${c.user?.login} answered:\n\n${c.body.trim()}`))
+  const said = comments.filter((c) => isQuestion(c) || isNote(c) || (c.user?.login && trusted(c.user.login)))
+    .map((c) => {
+      if (isQuestion(c)) return `The agents asked:\n\n${c.body.slice(MARKER.length).trim()}`
+      if (isNote(c)) return `The pipeline said:\n\n${c.body.replace(/^<!--.*?-->\s*/, '').trim()}`
+      return `${c.user?.login} answered:\n\n${c.body.trim()}`
+    })
   return [`# ${title}`, '', body ?? '', ...(said.length ? ['', '## Conversation', '', said.join('\n\n')] : []), ''].join('\n')
 }
 
@@ -45,7 +52,14 @@ export function section(report, name) {
 }
 
 export const questionsOf = (report) => section(report, 'Questions') || section(report, 'Model questions')
-export const hasModelQuestions = (text) => section(text, 'Model questions') !== ''
+
+/** What a report hands to other repositories: one section "## Delegate to <name>" for each. */
+export function delegationsIn(report) {
+  const names = [...(report ?? '').matchAll(/^#{1,6}\s*Delegate to\s+([\w.-]+)\s*$/gim)].map((m) => m[1])
+  return [...new Set(names)].map((name) => ({ name, text: section(report, `Delegate to ${name}`) })).filter((d) => d.text)
+}
+
+export const hasModelQuestions = (text) => section(text, 'Model questions') !== '' || delegationsIn(text).length > 0
 
 /** The comment that asks; past the limit it hands the ticket to a person. */
 export function askingComment(questions, rounds) {

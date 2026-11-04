@@ -130,8 +130,10 @@ pipeline/setup-github.sh <owner>/<name> Gate       # here
 ```
 
 The script asks for `ANTHROPIC_API_KEY`, from the [Claude Console](https://platform.claude.com), and `AGENT_TOKEN`, a fine-grained
-token on that repository alone with Contents, Pull requests, Issues and Workflows: read and write. No repository needs
-to write to another. Tag
+token on that repository alone with Contents, Pull requests, Issues and Workflows: read and write. It also offers
+`DELEGATE_TOKEN`, for a repository that depends on another system: a token on those repositories with Issues: read and write,
+Contents and Pull requests: read, whose owner has write access there. That is the one thing a repository writes to another: tickets, towards what it
+depends on. Without it, the agents ask a person instead. Tag
 the standards first, and the Warehouse before the Shop, because the Shop's deploy runs the Warehouse's images.
 
 Those images are private, as a company's would be. After the Warehouse's first deploy, open the settings of its

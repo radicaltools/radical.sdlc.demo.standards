@@ -1,0 +1,33 @@
+name: Waiting tickets
+
+# A reusable workflow of the company's pipeline. A ticket whose agents handed work to another
+# repository waits with the label agent:waiting. This looks at the tickets it waits for, and when
+# each was closed by a change that the version pinned here holds, starts the agents again. The
+# other repository knows nothing of it. Nothing here merges. No AI runs here.
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  wake:
+    name: Look at the waiting tickets
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: The standards, at the version this repository pins
+        run: node tools/standards.mjs
+      - name: Look
+        env:
+          GH_TOKEN: ${{ github.token }}
+          DELEGATE_TOKEN: ${{ secrets.DELEGATE_TOKEN }}
+          AGENT_TOKEN: ${{ secrets.AGENT_TOKEN }}
+        run: node .standards/pipeline/tools/delegate.mjs wake

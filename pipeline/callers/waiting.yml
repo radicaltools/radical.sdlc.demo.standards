@@ -1,0 +1,24 @@
+name: Waiting tickets
+
+# A ticket that waits for another repository goes on once a version with that work is pinned
+# here: when a pin reaches main, every day, or by hand.
+
+on:
+  push:
+    branches: [main]
+    paths: ['.radical/model/deps.json']
+  schedule:
+    - cron: '45 3 * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: waiting
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  waiting:
+    uses: radicaltools/radical.tools.sdlc.demo.2.standards/.github/workflows/waiting-tickets.yml@v2.1.0
+    secrets: inherit
