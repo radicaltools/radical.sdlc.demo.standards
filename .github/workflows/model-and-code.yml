@@ -207,6 +207,13 @@ jobs:
             finding)
               node .standards/pipeline/tools/run-agent.mjs coding-agent mode=finding base=origin/main brief=.agent/brief.md ;;
           esac
+      - name: A coding agent that hands work on leaves nothing
+        if: steps.task.outputs.mode == 'change'
+        run: |
+          if node .standards/pipeline/tools/delegate.mjs has .agent/report.md; then
+            git reset -q --hard HEAD
+            git clean -fdq
+          fi
       - name: Commit the code
         id: commit
         env:
@@ -271,5 +278,6 @@ jobs:
           if [ "$MODE" = "fix" ]; then gh pr edit "$PR" --repo "$GITHUB_REPOSITORY" --remove-label agent:fix; fi
           target="${ISSUE:-$PR}"
           if [ -n "$target" ] && [ "$CHANGED" != "true" ] && [ "$ASKED" != "true" ]; then
-            gh api "repos/$GITHUB_REPOSITORY/issues/$target/comments" -f body="The agents proposed nothing, so no pull request was opened: $RUN"
+            if [ "$MODE" = "fix" ]; then said="The coding agent changed nothing on this branch"; else said="The agents proposed nothing, so no pull request was opened"; fi
+            gh api "repos/$GITHUB_REPOSITORY/issues/$target/comments" -f body="$said: $RUN"
           fi

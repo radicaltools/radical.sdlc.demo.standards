@@ -148,6 +148,16 @@ describe('work for another repository', () => {
     expect(holding).toEqual(['Hand the work on', 'Hand the model questions back'])
     for (const name of holding) expect(step(name).run).not.toMatch(/run-agent|explore-round/)
   })
+  it('a coding agent that hands work on pushes nothing, whatever it built', () => {
+    const name = 'A coding agent that hands work on leaves nothing'
+    expect(at('Coding agent')).toBeLessThan(at(name))
+    expect(at(name)).toBeLessThan(at('Commit the code'))
+    expect(at(name)).toBeLessThan(at('Hand the model questions back'))
+    expect(step(name).if).toContain("mode == 'change'")
+  })
+  it('a fix that changes nothing does not say that no pull request was opened', () => {
+    expect(step('Comment the outcome').run).toContain('The coding agent changed nothing on this branch')
+  })
   it('the agents read what the dependencies have now before they decide', () => {
     expect(at('What the other repositories have now')).toBeLessThan(at('Model agent'))
   })
