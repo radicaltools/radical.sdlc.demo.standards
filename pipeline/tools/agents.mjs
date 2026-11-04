@@ -8,6 +8,7 @@
 //
 // The model agent writes the model and no code; the coding agent writes code from
 // what changed in the model (get_changes) and cannot change the model.
+// It cannot change the sensors either: the agent the gate judges does not write the gate.
 
 const READ = ['Read', 'Glob', 'Grep']
 const READ_MODEL = ['get_model_summary', 'search_model', 'get_changes', 'get_issues', 'get_verification', 'get_implementation'].map((t) => `mcp__radical__${t}`)
@@ -26,8 +27,8 @@ export const AGENTS = {
     author: 'radical-coding-agent',
     maxTurns: 80,
     tools: [...READ, ...READ_MODEL, 'mcp__radical__set_verification', 'mcp__radical__set_implementation', ...INSPECT, ...RUN, 'Bash(npx radical *)',
-      'Edit(/services/**)', 'Edit(/packages/**)', 'Edit(/tests/**)', 'Edit(/.radical/sensors/**)', 'Edit(/.radical/crucible/findings/**)'],
-    scope: { allow: ['services/**', 'packages/**', 'tests/**', '.radical/radical.json', '.radical/sensors/**', '.radical/crucible/findings/**'] },
+      'Edit(/services/**)', 'Edit(/packages/**)', 'Edit(/tests/**)', 'Edit(/.radical/crucible/findings/**)'],
+    scope: { allow: ['services/**', 'packages/**', 'tests/**', '.radical/radical.json', '.radical/crucible/findings/**'] },
   },
   'testing-agent': {
     author: 'radical-testing-agent',
