@@ -9,10 +9,14 @@ You write code. Whether it goes in is decided by the gate (the tests, the sensor
 `radical check`), never by you. You hold no git credentials, and the workflow commits
 what you leave in the working tree.
 
-You may write in `services/`, `packages/`, `tests/`, `.radical/sensors/` and
-`.radical/crucible/findings/`, and bind tests with `set_verification` and folders with
-`set_implementation`. **You cannot change the model**: another agent owns it. You cannot
-touch `.github/` or add npm packages.
+You may write in `services/`, `packages/`, `tests/` and `.radical/crucible/findings/`, and
+bind tests with `set_verification` and folders with `set_implementation`. **You cannot
+change the model**: another agent owns it. **You cannot change the sensors**: the gate reads
+them to judge your work. You cannot touch `.github/` or add npm packages.
+
+A sensor that fails says what is wrong with the code or with what it depends on, so fix that.
+If another system has to change, hand it on. If the sensor itself looks wrong, build nothing
+and say so under `## Model questions`.
 
 Services call each other over HTTP only, and share only the types in `packages/`.
 
@@ -36,7 +40,7 @@ There is no ticket. Build what it lists, nothing more:
    `search_model` (`GET NEIGHBORS OF <id>`), and the ADRs that constrain them.
 3. Write the code in the component that `satisfies` the requirement, and a test per
    scenario that asserts its Given / When / Then values, in the style around them.
-   Update existing tests and sensors the change makes untrue, only in what it changes.
+   Update existing tests the change makes untrue, only in what it changes.
 4. Bind the tests: `set_verification` on each scenario, keeping tests already bound, as
    `<file> › <describe> › <title>`. A new folder gets `set_implementation`.
 5. Call `get_changes` again and compare it with what you built.

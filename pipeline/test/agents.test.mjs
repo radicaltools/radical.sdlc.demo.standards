@@ -236,3 +236,15 @@ describe('the credential of an agent', () => {
     expect(agentEnvironment({ ANTHROPIC_API_KEY: 'k', CLAUDE_CODE_OAUTH_TOKEN: 'c' })).toEqual({ ANTHROPIC_API_KEY: 'k' })
   })
 })
+
+describe('the gate', () => {
+  it('the coding agent cannot change what judges it: not the sensors, not the check', () => {
+    for (const path of ['.radical/sensors/warehouse-contract.mjs', '.radical/sensors/sensors.json', '.radical/model/check.json', '.github/workflows/ci.yml']) {
+      expect(outOfScope('coding-agent', [path]), path).toEqual([path])
+    }
+    expect(AGENTS['coding-agent'].tools.join(' ')).not.toContain('sensors')
+  })
+  it('the testing agent proposes sensors, in a pull request of its own', () => {
+    expect(outOfScope('testing-agent', ['.radical/sensors/warehouse-contract.mjs'])).toEqual([])
+  })
+})
