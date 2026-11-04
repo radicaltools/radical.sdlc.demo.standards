@@ -14,7 +14,8 @@
 #                            Pull requests, Issues and Workflows: read and write
 #   DELEGATE_TOKEN           optional, for a repository that depends on another system: a
 #                            fine-grained token on those repositories alone, with Issues: read and
-#                            write. Its owner needs write access there. Without it, agents ask a person
+#                            write, Contents and Pull requests: read (which change closed a ticket).
+#                            Its owner needs write access there. Without it, agents ask a person
 set -euo pipefail
 repo="$1"; check="$2"
 
