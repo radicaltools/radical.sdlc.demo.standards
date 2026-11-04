@@ -12,4 +12,4 @@ scope: "atomic"
 trigger: "pull-request"
 ---
 
-Each repository's sensor idempotency sends each named write of the element twice and fails when the second answer differs or the state moved.
+Each repository's sensor idempotency sends each named write of the element twice, one after the other and then at the same time. It fails when the two answers differ, or when the state is not what one write leaves.
