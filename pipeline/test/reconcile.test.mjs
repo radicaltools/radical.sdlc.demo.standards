@@ -4,7 +4,8 @@ import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { outOfScope } from '../tools/agents.mjs'
-import { RECONCILED, branchOf, gapOf, markerOf, nextStep, outcomeOf } from '../tools/reconcile.mjs'
+import { planDelegations } from '../tools/delegate.mjs'
+import { RECONCILED, branchOf, gapOf, markerOf, nextStep, outcomeOf, ticketBody, ticketsAnswered } from '../tools/reconcile.mjs'
 
 const DESIRED = 'a'.repeat(40)
 const none = { added: [], changed: [], removed: [] }
@@ -36,6 +37,45 @@ describe('what to do now', () => {
   it('tries again on a new version of the model', () => {
     const old = 'b'.repeat(40)
     expect(step({ pulls: [{ number: 1, state: 'CLOSED', headRefName: branchOf(old) }], tickets: [{ number: 2, body: markerOf(old) }] })).toBe('work')
+  })
+})
+
+describe('the tickets the code answers', () => {
+  it('those the model changed for, and those the loop opened, once each', () => {
+    expect(ticketsAnswered(['Model: Returns (#29)', 'Model: Order (#32)', 'Model: Fix F-0001', 'Model: Returns again (#29)', ''], [{ number: 31 }, { number: 32 }])).toEqual(['29', '32', '31'])
+  })
+  it('a number inside a title is not one', () => {
+    expect(ticketsAnswered(['Model: Like #4 and (#5) said'], [])).toEqual([])
+  })
+})
+
+describe('the ticket that says why', () => {
+  it('carries the version it tried', () => {
+    expect(ticketBody(DESIRED, 'Why.', false)).toContain(markerOf(DESIRED))
+    expect(ticketBody(DESIRED, 'Why.', true)).toContain(markerOf(DESIRED))
+  })
+  it('tells a person to answer in a new ticket, so the report stays out of the model', () => {
+    expect(ticketBody(DESIRED, 'Why.', false)).toContain('open a new ticket holding only the answer')
+  })
+  it('asks nothing of a person when the work is handed on', () => {
+    const body = ticketBody(DESIRED, 'Why.', true)
+    expect(body).toContain('closes by itself')
+    expect(body).not.toContain('open a new ticket')
+  })
+})
+
+describe('what is handed on, again', () => {
+  const report = '## Delegate to warehouse\n\nA tracking status.\n\n## Delegate to billing\n\nA refund.\n'
+  const deps = { name: 'shop', dependencies: [
+    { name: 'warehouse', repo: 'https://github.com/o/warehouse.git' }, { name: 'billing', repo: 'https://github.com/o/billing.git' },
+  ] }
+  it('names the ticket after what it asks, when no ticket here says it', () => {
+    const { open } = planDelegations({ report: '## Delegate to warehouse\n\n**A tracking status** for a dispatch.\n\nMore.\n', deps, comments: [], body: '', title: '', from: 'o/shop#1' })
+    expect(open[0].title).toBe('shop: A tracking status for a dispatch.')
+  })
+  it('no second ticket for what is on its way', () => {
+    const { open } = planDelegations({ report, deps, comments: [], body: '', title: 'T', from: 'o/shop#1', asked: ['warehouse'] })
+    expect(open.map((t) => t.name)).toEqual(['billing'])
   })
 })
 
@@ -83,6 +123,11 @@ describe('on the command line', () => {
     writeFileSync(join(dir, 'code.ts'), 'x')
     execFileSync('node', [tool, 'outcome', 'none.md', 'success'], { cwd: dir, env })
     expect(readFileSync(output, 'utf8')).toBe('act=ask\nact=pull\n')
+  })
+  it('wakes nothing where the code follows the model', () => {
+    const dir = inRepo()
+    writeFileSync(join(dir, RECONCILED), JSON.stringify({ model: DESIRED }))
+    expect(execFileSync('node', [resolve('pipeline/tools/delegate.mjs'), 'wake'], { cwd: dir, encoding: 'utf8' })).toContain('nothing to wake')
   })
   it('a repository without the file does not reconcile', () => {
     const dir = inRepo()

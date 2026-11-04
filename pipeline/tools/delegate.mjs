@@ -14,7 +14,7 @@
 // A ticket opened here starts the agents there only because a ticket with a trusted author
 // got this far, and only down to MAX_DEPTH. Whatever cannot be opened goes to a person.
 import { execFileSync } from 'node:child_process'
-import { readFileSync, rmSync } from 'node:fs'
+import { existsSync, readFileSync, rmSync } from 'node:fs'
 import { join } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { MARKER, delegationsIn, isNote } from './questions.mjs'
@@ -34,14 +34,18 @@ export const depthOf = (body) => Number((body ?? '').match(/<!-- delegated-from 
 const marksOf = (comments) => comments.filter(isNote)
   .map((c) => c.body.match(/^<!-- delegation(-done)? ([\w.-]+) (\d+) -->/)).filter(Boolean)
 
+/** A title for what is asked, when no ticket here says it: its first line. */
+const headlineOf = (text) => text.split('\n')[0].replace(/[#*`]/g, '').trim().slice(0, 70)
+
 /** What a report hands on, in tickets to open and in reasons for a person. `comments` and
- *  `body` are those of the ticket the agents work on, `from` is that ticket (owner/name#12). */
-export function planDelegations({ report, deps, comments, body, title, from }) {
+ *  `body` are those of the ticket the agents work on, `from` is that ticket (owner/name#12),
+ *  and `asked` the dependencies that already have a ticket on the way. */
+export function planDelegations({ report, deps, comments, body, title, from, asked = [] }) {
   const depth = depthOf(body) + 1
   let left = MAX_TICKETS - marksOf(comments).filter((m) => !m[1]).length
   const open = []
   const refused = []
-  for (const { name, text } of delegationsIn(report)) {
+  for (const { name, text } of delegationsIn(report).filter((d) => !asked.includes(d.name))) {
     const dep = deps.dependencies?.find((d) => d.name === name)
     const slug = dep && slugOf(dep.repo)
     if (!slug) refused.push(`**${name}** is no repository this one depends on on GitHub. The agents asked of it:\n\n${text}`)
@@ -49,7 +53,7 @@ export function planDelegations({ report, deps, comments, body, title, from }) {
     else {
       left -= 1
       open.push({
-        name, slug, start: depth <= MAX_DEPTH, title: `${deps.name ?? 'Another repository'}: ${title}`,
+        name, slug, start: depth <= MAX_DEPTH, title: `${deps.name ?? 'Another repository'}: ${title || headlineOf(text)}`,
         body: `<!-- delegated-from ${from} depth=${depth} -->\n${from} needs this from this repository, and waits until a version with it is pinned there.\n\n${text}\n`,
       })
     }
@@ -90,6 +94,19 @@ if (import.meta.url === pathToFileURL(process.argv[1]).href) {
     here('issue', 'comment', issue, '--repo', repo, '--body', `${MARKER}\n${text}\n\nAnswer in a comment here: the first comment starts the agents again.`)
     here('issue', 'edit', issue, '--repo', repo, '--add-label', 'agent:question', '--remove-label', 'agent:waiting')
   }
+  // What one ticket of another repository has come to, read there.
+  const look = ({ name, number }) => {
+    const dep = (deps().dependencies ?? []).find((d) => d.name === name)
+    const slug = dep && slugOf(dep.repo)
+    if (!slug) return { name, number, verdict: 'person', label: `${name}#${number}` }
+    const readThere = process.env.DELEGATE_TOKEN || process.env.GH_TOKEN
+    const [owner, repoName] = slug.split('/')
+    const issue = JSON.parse(gh(readThere, 'api', 'graphql', '-f', `query=${CLOSER}`, '-F', `owner=${owner}`, '-F', `name=${repoName}`, '-F', `number=${number}`, '--jq', '.data.repository.issue'))
+    const closer = issue.timelineItems.nodes.at(-1)?.closer
+    const commit = closer?.mergeCommit?.oid ?? closer?.oid
+    const status = commit ? gh(readThere, 'api', `repos/${slug}/compare/${dep.ref}...${commit}`, '--jq', '.status').trim() : ''
+    return { name, number, pin: dep.ref, label: `${slug}#${number}`, verdict: verdict({ state: issue.state, stateReason: issue.stateReason, commit, inPin: status === 'behind' || status === 'identical' }) }
+  }
   if (command === 'providers') {
     for (const dep of deps().dependencies ?? []) {
       const slug = slugOf(dep.repo)
@@ -111,8 +128,11 @@ if (import.meta.url === pathToFileURL(process.argv[1]).href) {
     process.exit(delegationsIn(report).length ? 0 : 1)
   } else if (command === 'open') {
     const [issue, file] = args
+    const comments = commentsOf(issue)
+    // A ticket still open there, or closed with a version not pinned yet, is on its way: no second one.
+    const asked = waitingOn(comments).map(look).filter((l) => l.verdict === 'wait').map((l) => l.name)
     const { open, refused } = planDelegations({
-      report: readFileSync(file, 'utf8'), deps: deps(), comments: commentsOf(issue),
+      report: readFileSync(file, 'utf8'), deps: deps(), comments, asked,
       body: process.env.ISSUE_BODY, title: process.env.ISSUE_TITLE, from: `${repo}#${issue}`,
     })
     let opened = 0
@@ -135,18 +155,10 @@ if (import.meta.url === pathToFileURL(process.argv[1]).href) {
     here('issue', 'edit', issue, '--repo', repo, '--remove-label', 'agent:implement', ...(opened ? ['--add-label', 'agent:waiting'] : []))
     if (refused.length) ask(issue, `The agents could not hand everything on, so this needs a person.\n\n${refused.join('\n\n')}`)
   } else if (command === 'wake') {
-    const dependencies = deps().dependencies ?? []
-    const readThere = process.env.DELEGATE_TOKEN || process.env.GH_TOKEN
-    const look = ({ name, number }) => {
-      const dep = dependencies.find((d) => d.name === name)
-      const slug = dep && slugOf(dep.repo)
-      if (!slug) return { name, number, verdict: 'person', label: `${name}#${number}` }
-      const [owner, repoName] = slug.split('/')
-      const issue = JSON.parse(gh(readThere, 'api', 'graphql', '-f', `query=${CLOSER}`, '-F', `owner=${owner}`, '-F', `name=${repoName}`, '-F', `number=${number}`, '--jq', '.data.repository.issue'))
-      const closer = issue.timelineItems.nodes.at(-1)?.closer
-      const commit = closer?.mergeCommit?.oid ?? closer?.oid
-      const status = commit ? gh(readThere, 'api', `repos/${slug}/compare/${dep.ref}...${commit}`, '--jq', '.status').trim() : ''
-      return { name, number, pin: dep.ref, label: `${slug}#${number}`, verdict: verdict({ state: issue.state, stateReason: issue.stateReason, commit, inPin: status === 'behind' || status === 'identical' }) }
+    // Where the code follows the model, a pin that moves starts the loop, so nothing has to be woken.
+    if (existsSync('.radical/reconciled.json')) {
+      console.log('This repository reconciles: nothing to wake.')
+      process.exit(0)
     }
     const tickets = JSON.parse(here('issue', 'list', '--repo', repo, '--label', 'agent:waiting', '--state', 'open', '--json', 'number', '--limit', '100'))
     for (const { number } of tickets) {

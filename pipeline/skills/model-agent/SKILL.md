@@ -44,6 +44,12 @@ the code is not yours to name.
    has to carry it: the workflow opens the ticket there, and these agents start again when a
    version with the change is pinned here, with what you did not build still to do. Do this
    only on a ticket: on a finding, change nothing and say so in your report.
+
+   **With `code=follows` in the arguments, never hand on.** The model on main is what this
+   system should be, ahead of its code. So model what this system should do even when the
+   version pinned here lacks what it needs. Say what it needs from the other system in the text
+   of the requirement, and relate only to elements that version has. The coding agent reads the
+   pinned version, and the work is handed on from there.
 2. **A ticket.**
    - Add a `need` holding the brief's words as they are, unless a need already says it.
      Its `source` is the `source=` argument, as it stands (`issue-12`).

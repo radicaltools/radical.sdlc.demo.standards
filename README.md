@@ -114,7 +114,9 @@ A repository with `.radical/reconciled.json` works the other way round, as a tri
 the system should be, and that file names the commit of the model the code has reached, so the gap is `radical diff` between
 the two. A ticket ends in a pull request of the model alone. Once a person merges it, `reconcile.yml` sees the gap and the coding
 agent proposes the code, which a person merges too. Each version of the model gets one try: one pull request, or one ticket with
-the label `agent:stuck`. A tag means the code has reached the model, and `deploy.yml` fails on a tag where it has not, so a
+the label `agent:stuck`. A ticket stays open until the code is in. When the code needs another system, the agent hands the work on
+and a ticket with the label `agent:waiting` says so. A pin reaching main changes the model, so the loop tries again with nothing to wake
+it, and that ticket closes with the code. A tag means the code has reached the model, and `deploy.yml` fails on a tag where it has not, so a
 consumer pinning tags sees only what works.
 
 How the agents are kept honest is the same as in

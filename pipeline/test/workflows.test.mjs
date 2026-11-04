@@ -77,8 +77,23 @@ describe('the code follows the model', () => {
     expect(push.if).toContain("steps.only.outputs.only == 'true'")
     expect(push.env.BRANCH).toContain('agent-model/issue-')
   })
-  it('no agent works on a branch of the model alone', () => {
+  it('a ticket stays open until the code is in', () => {
+    const code = workflow('model-and-code').jobs.code.steps
+    const push = code.find((s) => s.name === 'Push and open the pull request').run
+    expect(push).toContain("printf '\\n\\nFor #%s\\n'")
+    expect(code.find((s) => s.name === 'Commit the model').run).toContain('$TITLE$ticket')
+    expect(named('Push and open the pull request').run).toContain('Closes #%s')
+  })
+  it('the model agent models ahead of the code, and only the loop hands on', () => {
+    const code = workflow('model-and-code').jobs.code.steps
+    expect(code.find((s) => s.name === 'Model agent').run).toContain('code=follows')
+    expect(code.find((s) => s.name === 'Did it hand the work on').run).toContain('[ ! -f .radical/reconciled.json ]')
+    expect(code.find((s) => s.name === 'Hand the model questions back').run).toContain('[ ! -f .radical/reconciled.json ]')
+    expect(named('A person reads why not, or the work is handed on').env.DELEGATE_TOKEN).toContain('DELEGATE_TOKEN')
+  })
+  it('no agent works on a branch of the model alone, and the testing agent reads nothing on the loop\'s', () => {
     expect(workflow('testing-agent').jobs.propose.if).toContain("!startsWith(github.head_ref, 'agent-model/')")
+    expect(workflow('testing-agent').jobs.propose.if).toContain("!startsWith(github.head_ref, 'agent/reconcile-')")
     expect(workflow('gate').jobs['auto-fix'].if).toContain("startsWith(github.head_ref, 'agent/')")
   })
   it('a tag is refused while there is a gap, before anything is published', () => {
