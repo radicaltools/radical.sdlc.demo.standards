@@ -37,7 +37,8 @@ that run is thrown away: the workflow pushes nothing from a run that hands work 
 There is no ticket. Build what it lists, nothing more:
 
 1. Call `get_changes` (MCP server `radical`). If it lists nothing, change nothing and
-   say so.
+   say so. If what it lists asks for no code (a reworded text, a new name), change nothing
+   and end your report with a section headed exactly `## No code needed`, saying why.
 2. For each changed requirement and scenario, read the elements around it with
    `search_model` (`GET NEIGHBORS OF <id>`), and the ADRs that constrain them.
 3. Write the code in the component that `satisfies` the requirement, and a test per

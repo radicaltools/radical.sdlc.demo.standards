@@ -27,9 +27,14 @@ jobs:
       TAG: ${{ github.ref_type == 'tag' && github.ref_name || github.sha }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: The standards, at the version this repository pins
         run: node tools/standards.mjs
       - uses: ./.standards/.github/actions/setup
+      - name: A version means the code has reached the model
+        if: github.ref_type == 'tag'
+        run: node .standards/pipeline/tools/reconcile.mjs converged
       - run: npm run test:reports
       - name: The versions of the other systems' images
         run: node .standards/pipeline/tools/pins-env.mjs >> "$GITHUB_ENV"
