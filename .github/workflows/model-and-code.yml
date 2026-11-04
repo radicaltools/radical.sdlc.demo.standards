@@ -21,6 +21,10 @@ name: Model and coding agents
 # model agent asks: the workflow puts its questions on the issue and stops, with
 # nothing committed. The comment of a person with write access starts it again.
 #
+# When a ticket needs another repository, the agent names the dependency and says what it
+# needs: the workflow opens the ticket there, from deps.json, and this one waits with nothing
+# committed. Waiting tickets (waiting-tickets.yml) starts it again.
+#
 # The text of an issue is untrusted in a public repository. Only a ticket written by
 # someone with write access starts an agent, whoever gives the label: an author without
 # it could change the text after a person has read it. The text reaches the model agent
@@ -136,6 +140,9 @@ jobs:
         env:
           BRANCH: ${{ steps.task.outputs.branch }}
         run: git checkout -B "$BRANCH"
+      - name: What the other repositories have now
+        if: steps.task.outputs.mode == 'change'
+        run: node .standards/pipeline/tools/delegate.mjs providers .agent/providers
       - name: Model agent
         if: steps.task.outputs.mode != 'fix'
         env:
@@ -159,9 +166,27 @@ jobs:
           ISSUE: ${{ github.event.issue.number }}
           ROUNDS: ${{ steps.task.outputs.rounds }}
         run: node .standards/pipeline/tools/questions.mjs ask "$ISSUE" .agent/model-report.md "$ROUNDS"
+      - name: Did it hand the work on
+        id: delegated
+        if: steps.task.outputs.mode == 'change' && steps.asked.outputs.asked != 'true'
+        run: |
+          if node .standards/pipeline/tools/delegate.mjs has .agent/model-report.md; then
+            git checkout -- .radical/model
+            git clean -fdq .radical/model
+            echo "delegated=true" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Hand the work on
+        if: steps.delegated.outputs.delegated == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          DELEGATE_TOKEN: ${{ secrets.DELEGATE_TOKEN }}
+          ISSUE: ${{ github.event.issue.number }}
+          ISSUE_TITLE: ${{ github.event.issue.title }}
+          ISSUE_BODY: ${{ github.event.issue.body }}
+        run: node .standards/pipeline/tools/delegate.mjs open "$ISSUE" .agent/model-report.md
       - name: Commit the model
         id: model
-        if: steps.task.outputs.mode != 'fix' && steps.asked.outputs.asked != 'true'
+        if: steps.task.outputs.mode != 'fix' && steps.asked.outputs.asked != 'true' && steps.delegated.outputs.delegated != 'true'
         env:
           TITLE: ${{ steps.task.outputs.title }}
         run: |
@@ -192,11 +217,17 @@ jobs:
         if: steps.task.outputs.mode == 'change' && steps.commit.outputs.changed != 'true'
         env:
           GH_TOKEN: ${{ github.token }}
+          DELEGATE_TOKEN: ${{ secrets.DELEGATE_TOKEN }}
           ISSUE: ${{ github.event.issue.number }}
+          ISSUE_TITLE: ${{ github.event.issue.title }}
+          ISSUE_BODY: ${{ github.event.issue.body }}
           ROUNDS: ${{ steps.task.outputs.rounds }}
         run: |
           if node .standards/pipeline/tools/questions.mjs has "Model questions" .agent/report.md; then
             node .standards/pipeline/tools/questions.mjs ask "$ISSUE" .agent/report.md "$ROUNDS"
+            echo "handed=true" >> "$GITHUB_OUTPUT"
+          elif node .standards/pipeline/tools/delegate.mjs has .agent/report.md; then
+            node .standards/pipeline/tools/delegate.mjs open "$ISSUE" .agent/report.md
             echo "handed=true" >> "$GITHUB_OUTPUT"
           fi
       - name: Push and open the pull request
@@ -232,7 +263,7 @@ jobs:
           GH_TOKEN: ${{ secrets.AGENT_TOKEN }}
           MODE: ${{ steps.task.outputs.mode }}
           CHANGED: ${{ steps.commit.outputs.changed }}
-          ASKED: ${{ steps.asked.outputs.asked || steps.handed.outputs.handed }}
+          ASKED: ${{ steps.asked.outputs.asked || steps.delegated.outputs.delegated || steps.handed.outputs.handed }}
           ISSUE: ${{ github.event.issue.number }}
           PR: ${{ github.event.pull_request.number }}
           RUN: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}

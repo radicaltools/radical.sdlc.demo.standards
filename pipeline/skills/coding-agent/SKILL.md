@@ -18,8 +18,11 @@ Services call each other over HTTP only, and share only the types in `packages/`
 
 The model has elements of other models too, which come from `.radical/model/deps.json`:
 the company's standards and other systems. They are read-only, and live in other
-repositories. A call to another system follows its OpenAPI description at the pinned version,
-and a change it needs from that system goes under `## Model questions`, never around it.
+repositories. A call to another system follows its OpenAPI description at the pinned version.
+If the model asks for what that version does not have, never work around it: build nothing, and end
+your report with a section headed exactly `## Delegate to <name>`, where `<name>` is that dependency
+in `.radical/model/deps.json`, saying what is needed in that system's terms. The workflow opens the
+ticket there, and you start again when a version with it is pinned here.
 
 ## mode=implement: build what changed in the model
 

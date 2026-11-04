@@ -12,6 +12,9 @@
 #                            subscription
 #   AGENT_TOKEN              a fine-grained token on this repository, with Contents,
 #                            Pull requests, Issues and Workflows: read and write
+#   DELEGATE_TOKEN           optional, for a repository that depends on another system: a
+#                            fine-grained token on those repositories alone, with Issues: read and
+#                            write. Its owner needs write access there. Without it, agents ask a person
 set -euo pipefail
 repo="$1"; check="$2"
 
@@ -20,11 +23,14 @@ gh repo create "$repo" --public --source . --remote origin --push
 gh label create agent:implement --repo "$repo" --color 5319e7 --description "The model and coding agents implement this issue" --force
 gh label create agent:fix --repo "$repo" --color d93f0b --description "The coding agent fixes this pull request" --force
 gh label create agent:question --repo "$repo" --color fbca04 --description "An agent is waiting for an answer" --force
+gh label create agent:waiting --repo "$repo" --color c5def5 --description "Waits for a ticket in another repository" --force
 
 for name in ANTHROPIC_API_KEY AGENT_TOKEN; do
   read -r -s -p "$name: " value; echo
   printf '%s' "$value" | gh secret set "$name" --repo "$repo"
 done
+read -r -s -p "DELEGATE_TOKEN (Enter for none): " value; echo
+if [ -n "$value" ]; then printf '%s' "$value" | gh secret set DELEGATE_TOKEN --repo "$repo"; fi
 
 # Outsiders cannot open issues or comment. GitHub allows this for six months at most.
 gh api -X PUT "repos/$repo/interaction-limits" -f limit=collaborators_only -f expiry=six_months
