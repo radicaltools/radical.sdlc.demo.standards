@@ -1,8 +1,9 @@
 import { execFileSync } from 'node:child_process'
-import { chmodSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs'
+import { chmodSync, cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
+import { parse } from 'yaml'
 import { MAX_DEPTH, MAX_TICKETS, depthOf, planDelegations, verdict, waitingOn, wakeAction } from '../tools/delegate.mjs'
 import { briefOf, delegationsIn, hasModelQuestions } from '../tools/questions.mjs'
 
@@ -159,5 +160,38 @@ process.stdout.write(key ? answers[key] : '')
     const log = calls()
     expect(log.some((c) => c.includes('--add-label agent:question') && c.includes('--remove-label agent:waiting'))).toBe(true)
     expect(log.some((c) => c.includes('--add-label agent:implement'))).toBe(false)
+  })
+})
+
+describe('the step after the coding agent, in a real repository', () => {
+  const STEP = parse(readFileSync('.github/workflows/model-and-code.yml', 'utf8')).jobs.code.steps
+    .find((s) => s.name === 'A coding agent that hands work on leaves nothing').run
+  function built(report) {
+    const dir = mkdtempSync(join(tmpdir(), 'after-code-'))
+    const git = (...args) => execFileSync('git', ['-c', 'user.name=t', '-c', 'user.email=t@t', ...args], { cwd: dir, stdio: 'ignore' })
+    git('init', '-q')
+    writeFileSync(join(dir, '.gitignore'), '.agent/\n.standards/\n')
+    writeFileSync(join(dir, 'kept.ts'), 'old\n')
+    git('add', '-A')
+    git('commit', '-qm', 'model')
+    cpSync('pipeline/tools', join(dir, '.standards/pipeline/tools'), { recursive: true })
+    mkdirSync(join(dir, '.agent'))
+    writeFileSync(join(dir, '.agent/report.md'), report)
+    writeFileSync(join(dir, 'kept.ts'), 'changed by the agent\n')
+    writeFileSync(join(dir, 'new.ts'), 'added by the agent\n')
+    execFileSync('bash', ['-e', '-c', STEP], { cwd: dir, stdio: 'ignore' })
+    return dir
+  }
+  it('throws away what the agent built, and keeps its report', () => {
+    const dir = built('## Done\n\nBuilt it.\n\n## Delegate to warehouse\n\nMake it idempotent.\n')
+    expect(readFileSync(join(dir, 'kept.ts'), 'utf8')).toBe('old\n')
+    expect(existsSync(join(dir, 'new.ts'))).toBe(false)
+    expect(readFileSync(join(dir, '.agent/report.md'), 'utf8')).toContain('Delegate to warehouse')
+    expect(existsSync(join(dir, '.standards/pipeline/tools/delegate.mjs'))).toBe(true)
+  })
+  it('keeps what the agent built when it hands nothing on', () => {
+    const dir = built('## Done\n\nBuilt it.\n')
+    expect(readFileSync(join(dir, 'kept.ts'), 'utf8')).toBe('changed by the agent\n')
+    expect(existsSync(join(dir, 'new.ts'))).toBe(true)
   })
 })

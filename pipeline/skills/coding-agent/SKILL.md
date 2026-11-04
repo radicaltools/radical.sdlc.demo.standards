@@ -22,7 +22,8 @@ repositories. A call to another system follows its OpenAPI description at the pi
 If the model asks for what that version does not have, never work around it: build nothing, and end
 your report with a section headed exactly `## Delegate to <name>`, where `<name>` is that dependency
 in `.radical/model/deps.json`, saying what is needed in that system's terms. The workflow opens the
-ticket there, and you start again when a version with it is pinned here.
+ticket there, and you start again when a version with it is pinned here. Whatever else you wrote in
+that run is thrown away: the workflow pushes nothing from a run that hands work on.
 
 ## mode=implement: build what changed in the model
 
