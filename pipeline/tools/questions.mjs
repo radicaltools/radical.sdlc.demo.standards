@@ -52,6 +52,9 @@ export function section(report, name) {
 }
 
 export const questionsOf = (report) => section(report, 'Questions') || section(report, 'Model questions')
+/** What a person reads when the agents stop: their questions, or else all they reported,
+ *  because a run that built nothing and asked nothing must not stop in silence. */
+export const whyStopped = (report) => questionsOf(report) || (report ?? '').trim()
 
 /** What a report hands to other repositories: one section "## Delegate to <name>" for each. */
 export function delegationsIn(report) {
@@ -91,7 +94,7 @@ if (import.meta.url === pathToFileURL(process.argv[1]).href) {
     editLabels('--remove-label', 'agent:question')
     console.log(roundsOf(comments))
   } else if (command === 'ask') {
-    gh('issue', 'comment', issue, '--repo', repo, '--body', askingComment(questionsOf(readFileSync(rest[0], 'utf8')), Number(rest[1])))
+    gh('issue', 'comment', issue, '--repo', repo, '--body', askingComment(whyStopped(readFileSync(rest[0], 'utf8')), Number(rest[1])))
     editLabels('--add-label', 'agent:question', '--remove-label', 'agent:implement')
   } else if (command === 'trusted') {
     process.exit(mayWrite(permissionOf(issue)) ? 0 : 1)

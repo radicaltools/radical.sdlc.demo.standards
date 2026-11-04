@@ -6,7 +6,7 @@
 // agent:waiting, until the other is closed by a change and a version with that change is
 // pinned here. The other repository knows nothing of who asked: this one looks.
 //
-//   node delegate.mjs providers <dir>         what the dependencies have now, for the agents to read
+//   node delegate.mjs providers <dir>         each dependency for the agents to read: <name>/ as it is now, <name>-pinned/ at the pin
 //   node delegate.mjs has <report>            exit status 0 when the report delegates
 //   node delegate.mjs open <issue> <report>   with GH_TOKEN (here), DELEGATE_TOKEN (there)
 //   node delegate.mjs wake                    with GH_TOKEN (here), AGENT_TOKEN (starts the agents)
@@ -94,12 +94,15 @@ if (import.meta.url === pathToFileURL(process.argv[1]).href) {
     for (const dep of deps().dependencies ?? []) {
       const slug = slugOf(dep.repo)
       if (!slug || !NAME.test(dep.name)) continue
-      const dir = join(args[0], dep.name)
-      try {
-        execFileSync('git', ['clone', '--quiet', '--depth', '1', `https://github.com/${slug}.git`, dir], { stdio: 'inherit' })
-        rmSync(join(dir, '.git'), { recursive: true, force: true })
-      } catch (error) {
-        console.error(`${dep.name}: ${error.message}`)
+      for (const [folder, ref] of [[dep.name, []], [`${dep.name}-pinned`, dep.ref ? ['--branch', dep.ref] : null]]) {
+        if (!ref) continue
+        const dir = join(args[0], folder)
+        try {
+          execFileSync('git', ['clone', '--quiet', '--depth', '1', ...ref, `https://github.com/${slug}.git`, dir], { stdio: 'inherit' })
+          rmSync(join(dir, '.git'), { recursive: true, force: true })
+        } catch (error) {
+          console.error(`${folder}: ${error.message}`)
+        }
       }
     }
   } else if (command === 'has') {

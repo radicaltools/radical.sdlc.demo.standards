@@ -141,7 +141,6 @@ jobs:
           BRANCH: ${{ steps.task.outputs.branch }}
         run: git checkout -B "$BRANCH"
       - name: What the other repositories have now
-        if: steps.task.outputs.mode == 'change'
         run: node .standards/pipeline/tools/delegate.mjs providers .agent/providers
       - name: Model agent
         if: steps.task.outputs.mode != 'fix'
@@ -221,7 +220,7 @@ jobs:
         run: .standards/pipeline/tools/commit-as.sh coding-agent "$TITLE"
       - name: Hand the model questions back
         id: handed
-        if: steps.task.outputs.mode == 'change' && steps.commit.outputs.changed != 'true'
+        if: steps.task.outputs.mode == 'change' && steps.commit.outputs.changed != 'true' && steps.asked.outputs.asked != 'true' && steps.delegated.outputs.delegated != 'true'
         env:
           GH_TOKEN: ${{ github.token }}
           DELEGATE_TOKEN: ${{ secrets.DELEGATE_TOKEN }}
@@ -230,13 +229,15 @@ jobs:
           ISSUE_BODY: ${{ github.event.issue.body }}
           ROUNDS: ${{ steps.task.outputs.rounds }}
         run: |
-          if node .standards/pipeline/tools/questions.mjs has "Model questions" .agent/report.md; then
-            node .standards/pipeline/tools/questions.mjs ask "$ISSUE" .agent/report.md "$ROUNDS"
-            echo "handed=true" >> "$GITHUB_OUTPUT"
-          elif node .standards/pipeline/tools/delegate.mjs has .agent/report.md; then
-            node .standards/pipeline/tools/delegate.mjs open "$ISSUE" .agent/report.md
-            echo "handed=true" >> "$GITHUB_OUTPUT"
+          # A run that pushes nothing never stops in silence: it hands work on, or a person reads why.
+          report=.agent/report.md
+          [ -f "$report" ] || report=.agent/model-report.md
+          if ! node .standards/pipeline/tools/questions.mjs has "Model questions" "$report" && node .standards/pipeline/tools/delegate.mjs has "$report"; then
+            node .standards/pipeline/tools/delegate.mjs open "$ISSUE" "$report"
+          else
+            node .standards/pipeline/tools/questions.mjs ask "$ISSUE" "$report" "$ROUNDS"
           fi
+          echo "handed=true" >> "$GITHUB_OUTPUT"
       - name: Push and open the pull request
         if: steps.commit.outputs.changed == 'true'
         env:

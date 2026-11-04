@@ -158,6 +158,21 @@ describe('work for another repository', () => {
   it('a fix that changes nothing does not say that no pull request was opened', () => {
     expect(step('Comment the outcome').run).toContain('The coding agent changed nothing on this branch')
   })
+  it('every way in reads the dependencies, the fix too', () => {
+    expect(step('What the other repositories have now').if).toBeUndefined()
+  })
+  it('both agents are told where the dependencies are', () => {
+    for (const agent of ['model-agent', 'coding-agent']) {
+      expect(readFileSync(`pipeline/skills/${agent}/SKILL.md`, 'utf8')).toContain('.agent/providers/<name>-pinned/')
+    }
+  })
+  it('a run that pushes nothing never stops in silence', () => {
+    const back = step('Hand the model questions back')
+    expect(back.run).toContain('questions.mjs ask "$ISSUE" "$report"')
+    expect(back.run).toContain('delegate.mjs open "$ISSUE" "$report"')
+    expect(back.if).toContain("steps.asked.outputs.asked != 'true'")
+    expect(back.if).toContain("steps.delegated.outputs.delegated != 'true'")
+  })
   it('the agents read what the dependencies have now before they decide', () => {
     expect(at('What the other repositories have now')).toBeLessThan(at('Model agent'))
   })
