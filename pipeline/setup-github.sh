@@ -25,6 +25,7 @@ gh label create agent:implement --repo "$repo" --color 5319e7 --description "The
 gh label create agent:fix --repo "$repo" --color d93f0b --description "The coding agent fixes this pull request" --force
 gh label create agent:question --repo "$repo" --color fbca04 --description "An agent is waiting for an answer" --force
 gh label create agent:waiting --repo "$repo" --color c5def5 --description "Waits for a ticket in another repository" --force
+gh label create agent:stuck --repo "$repo" --color b60205 --description "The code cannot reach this version of the model" --force
 
 for name in ANTHROPIC_API_KEY AGENT_TOKEN; do
   read -r -s -p "$name: " value; echo

@@ -10,7 +10,7 @@ const caller = (name) => parse(readFileSync(`pipeline/callers/${name}.yml`, 'utf
 const stepsOf = (job) => job.steps
 const agentSteps = (job) => stepsOf(job).filter((s) => /run-agent\.mjs|explore-round\.mjs/.test(s.run ?? ''))
 
-const WITH_AGENTS = [['model-and-code', 'code'], ['testing-agent', 'propose'], ['nightly', 'night']]
+const WITH_AGENTS = [['model-and-code', 'code'], ['testing-agent', 'propose'], ['nightly', 'night'], ['reconcile', 'reconcile']]
 
 describe('agents in the workflows', () => {
   it.each(WITH_AGENTS)('%s: the checkout keeps no credentials', (name, job) => {
@@ -37,6 +37,58 @@ describe('agents in the workflows', () => {
     const condition = workflow('testing-agent').jobs.propose.if
     expect(condition).toContain("startsWith(github.head_ref, 'agent-tests/')")
     expect(condition).toContain("startsWith(github.head_ref, 'bot/')")
+  })
+})
+
+describe('the code follows the model', () => {
+  const steps = () => workflow('reconcile').jobs.reconcile.steps
+  const named = (name) => steps().find((s) => s.name === name)
+  it('starts when the model or what the code reached changes on main, and every day', () => {
+    const on = caller('reconcile').on
+    expect(on.push.branches).toEqual(['main'])
+    expect(on.push.paths).toEqual(['.radical/model/**', '.radical/reconciled.json'])
+    expect(on.schedule).toHaveLength(1)
+  })
+  it('one run at a time', () => {
+    expect(caller('reconcile').concurrency.group).toBe('reconcile')
+  })
+  it('the agent works from the model, not from a ticket, and since what the code has reached', () => {
+    expect(named('Coding agent').run).toContain('mode=implement "base=$BASE"')
+    expect(JSON.stringify(workflow('reconcile'))).not.toMatch(/github\.event\.issue/)
+  })
+  it('a failed agent still ends in a pull request or a ticket, so a version gets one try', () => {
+    expect(named('Coding agent')['continue-on-error']).toBe(true)
+  })
+  it('the pipeline, not the agent, says which model the code has reached', () => {
+    const run = named('Say which model the code has reached').run
+    expect(run).toContain('reconcile.mjs mark')
+    expect(run).toContain('commit-as.sh pipeline')
+  })
+  it('nothing merges', () => {
+    for (const s of steps()) expect(s.run ?? '').not.toMatch(/gh pr merge/)
+  })
+  it('a ticket ends in the model alone where the code follows the model', () => {
+    const code = workflow('model-and-code').jobs.code.steps
+    const only = code.find((s) => s.id === 'only')
+    expect(only.run).toContain('.radical/reconciled.json')
+    expect(code.find((s) => s.name === 'Coding agent').if).toContain("steps.only.outputs.only != 'true'")
+    expect(code.find((s) => s.name === 'Hand the model questions back').if).toContain("steps.only.outputs.only != 'true'")
+    const push = code.find((s) => s.name === 'Push and open the pull request')
+    expect(push.if).toContain("steps.only.outputs.only == 'true'")
+    expect(push.env.BRANCH).toContain('agent-model/issue-')
+  })
+  it('no agent works on a branch of the model alone', () => {
+    expect(workflow('testing-agent').jobs.propose.if).toContain("!startsWith(github.head_ref, 'agent-model/')")
+    expect(workflow('gate').jobs['auto-fix'].if).toContain("startsWith(github.head_ref, 'agent/')")
+  })
+  it('a tag is refused while there is a gap, before anything is published', () => {
+    const deploy = workflow('deploy').jobs.deploy
+    const at = (name) => deploy.steps.findIndex((s) => s.name === name)
+    const guard = deploy.steps[at('A version means the code has reached the model')]
+    expect(guard.if).toBe("github.ref_type == 'tag'")
+    expect(guard.run).toContain('reconcile.mjs converged')
+    expect(at('A version means the code has reached the model')).toBeLessThan(at('Publish the images'))
+    expect(deploy.steps[0].with['fetch-depth']).toBe(0)
   })
 })
 
@@ -124,8 +176,8 @@ describe('model agent and coding agent', () => {
   it('a fix does not go through the model agent', () => {
     expect(steps().find((s) => s.name === 'Model agent').if).toContain("!= 'fix'")
   })
-  it('a pull request needs code, not only a model', () => {
-    expect(steps().find((s) => s.name === 'Push and open the pull request').if).toBe("steps.commit.outputs.changed == 'true'")
+  it('a pull request needs code, not only a model, unless the code follows the model', () => {
+    expect(steps().find((s) => s.name === 'Push and open the pull request').if).toBe("steps.commit.outputs.changed == 'true' || steps.only.outputs.only == 'true'")
   })
 })
 

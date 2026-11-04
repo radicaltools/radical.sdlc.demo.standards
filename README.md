@@ -106,6 +106,16 @@ configure, and the brief names what changed in the model since the night before.
 | [`prepare-for-review.yml`](.github/workflows/prepare-for-review.yml) | the gate or the testing agent ending | no | With `AGENT_AUTOMATION`: merges a green proposal into its branch, marks a finished pull request ready for review. |
 | [`deploy.yml`](.github/workflows/deploy.yml) | a commit on main, a version tag | no | Starts the stack on the runner, smoke-tests it, then publishes the images. |
 | [`update-pins.yml`](.github/workflows/update-pins.yml) | every day, or by hand | no | Finds new versions of what the repository depends on, and opens a pull request for each. |
+| [`reconcile.yml`](.github/workflows/reconcile.yml) | the model or `.radical/reconciled.json` changing on main, every day, or by hand | the coding agent, when there is a gap | Only in a repository with `.radical/reconciled.json`. Reads the gap between the model and the code, and proposes the code or tells a person why not. |
+
+### The model as the state wanted
+
+A repository with `.radical/reconciled.json` works the other way round, as a trial in the Warehouse. The model on `main` is what
+the system should be, and that file names the commit of the model the code has reached, so the gap is `radical diff` between
+the two. A ticket ends in a pull request of the model alone. Once a person merges it, `reconcile.yml` sees the gap and the coding
+agent proposes the code, which a person merges too. Each version of the model gets one try: one pull request, or one ticket with
+the label `agent:stuck`. A tag means the code has reached the model, and `deploy.yml` fails on a tag where it has not, so a
+consumer pinning tags sees only what works.
 
 How the agents are kept honest is the same as in
 [demo.1](https://github.com/radicaltools/radical.tools.sdlc.demo.1#how-the-agents-are-kept-honest): the model

@@ -48,6 +48,7 @@ jobs:
       needs.decide.outputs.merged-proposal != 'true' &&
       github.event.pull_request.head.repo.full_name == github.repository &&
       !startsWith(github.head_ref, 'agent-tests/') &&
+      !startsWith(github.head_ref, 'agent-model/') &&
       !startsWith(github.head_ref, 'bot/')
     runs-on: ubuntu-latest
     timeout-minutes: 30
