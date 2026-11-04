@@ -166,6 +166,11 @@ describe('work for another repository', () => {
       expect(readFileSync(`pipeline/skills/${agent}/SKILL.md`, 'utf8')).toContain('.agent/providers/<name>-pinned/')
     }
   })
+  it('a report with a question and a request to another repository hands on: the question can wait', () => {
+    const run = step('Hand the model questions back').run
+    expect(run).not.toContain('has "Model questions"')
+    expect(run.indexOf('delegate.mjs has "$report"')).toBeLessThan(run.indexOf('questions.mjs ask'))
+  })
   it('a run that pushes nothing never stops in silence', () => {
     const back = step('Hand the model questions back')
     expect(back.run).toContain('questions.mjs ask "$ISSUE" "$report"')
