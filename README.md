@@ -57,8 +57,8 @@ own pull request, in front of the team that can fix it.
 that depends on another declares it in its own `deps.json`, and looks for new versions itself.
 
 1. A change merges here and gets a tag, `v1.1.0`.
-2. Every day, or by hand, [`update-pins.yml`](.github/workflows/update-pins.yml) runs in the Warehouse and in the Shop, each
-   on its own. It reads the tags of each repository in `deps.json`.
+2. Every day, or by hand, each of the Warehouse and the Shop runs its `pins.yml`, which calls
+   [`update-pins.yml`](.github/workflows/update-pins.yml). It reads the tags of each repository in `deps.json`.
 3. A newer version becomes a pull request there: the pin in `deps.json` moves, and so does the version in its workflows,
    which `tools/standards.mjs --check` in its Gate keeps equal. A newer tag moves the open pull request along.
 4. The text of the pull request says what changed in the model of the dependency, from `radical diff` between the two tags.
