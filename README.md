@@ -1,156 +1,135 @@
 # radical.sdlc.demo.standards
 
-The company's standards in **radical.sdlc.demo**: the decisions every system follows, how each is
-measured, and the delivery pipeline on GitHub where agents propose and deterministic checks decide.
-The demo builds one system in several repositories, with one model:
+The company's standards in **radical.sdlc.demo**: four decisions every system follows, how each is measured,
+and the parts of the delivery pipeline every repository runs: the Gate, the agents and the tools around them.
 
-| Repository | What it holds | Uses the standards |
+The demo builds one system, a shop and a warehouse, in three repositories:
+
+| Repository | What it holds | What it takes from here |
 |---|---|---|
-| **standards** (this one) | The decisions every system follows, how each is measured, the pipeline | — |
-| [architecture](https://github.com/radicaltools/radical.sdlc.demo.architecture) | The one model of the whole system, and the loop that brings the code to it | its model depends on this one's (`deps.json`), read-only |
-| [warehouse](https://github.com/radicaltools/radical.sdlc.demo.warehouse) | The Warehouse: stock, reservations, dispatch | the Gate, the sensors and the agents' skills, at a pinned version |
-| [shop](https://github.com/radicaltools/radical.sdlc.demo.shop) | The Shop: prices, orders, notifications | the same |
+| [architecture](https://github.com/radicaltools/radical.sdlc.demo.architecture) | The one model of the whole system, and the pipeline that takes a change from its ticket to its acceptance | the standards' model, read-only, and the agents |
+| [warehouse](https://github.com/radicaltools/radical.sdlc.demo.warehouse) | Code: stock, reservations, dispatch | the Gate, the sensors and the agents |
+| [shop](https://github.com/radicaltools/radical.sdlc.demo.shop) | Code: prices, orders, notifications | the same |
+| **standards** (this one) | The decisions, their fitness functions and sensors, the Gate, the agents | — |
 
-How a change goes through it is in [the architecture repository](https://github.com/radicaltools/radical.sdlc.demo.architecture#how-a-change-gets-through).
-The rest of this README describes what this repository offers on its own, also for systems that keep a
-model in each repository and join them by federation, which is how the demo started.
+How a change goes through the demo, from a ticket to merged code, is in
+[the architecture repository](https://github.com/radicaltools/radical.sdlc.demo.architecture#how-a-change-gets-through).
+This page says what the standards do in it.
 
-Each repository keeps the model of what it builds. Its `.radical/model/deps.json` names the models
-it depends on, each at a version, and every tool shows them beside its own, read-only: Studio, the
-MCP server the agents use, and `radical check` in the Gate. Open the Shop's `.radical` in
-[Radical Studio](https://radical.tools) and you see all three; its folder **Landscape** draws them together.
+## The decisions
 
-![Three lanes, one per repository. The standards hold the decisions and fitness functions, the sensors and the pipeline. The Warehouse and the Shop read each of them at a pinned version: the model, the sensors they run, the pipeline their workflows call. The Shop also reads the Warehouse's model, its OpenAPI descriptions and its images, at a pinned version.](docs/repositories.svg)
+| Decision (ADR) | Fitness function | Sensor | Runs |
+|---|---|---|---|
+| Services talk over HTTP | Services stay on their own | [`boundaries`](sensors/boundaries.mjs): every import in a service stays inside it, or names a workspace of shared types | in every pull request |
+| APIs described in OpenAPI | API matches its description | [`openapi`](sensors/openapi.mjs): a service's routes and its `openapi.yaml` name the same operations, both ways | in every pull request |
+| Retried writes change nothing | Repeated write changes nothing | [`idempotency`](sensors/idempotency.mjs): each named write is sent twice, after each other and at once; the answers and the state are those of one write | in every pull request |
+| Rules hold under any sequence | Rules hold in random sequences | [`fuzz`](sensors/fuzz.mjs): the repository's fuzz files, on their seeds | at night, which the demo does not run |
 
-Each lane is a repository. An arrow is what one reads from another, always at the version it pins.
-Violet holds the agents.
+They are in this repository's model, `.radical/model`. Each sensor measures one element at a time, in the
+repository that builds it, and judges nothing: the condition in the fitness function's model judges the value.
+
+## How the demo uses the standards
+
+### 1. In the model, as a dependency
+
+The architecture's model names this one in `.radical/model/deps.json`, at a tag (`v2.3.0` today). That is a
+federation of two models: the standards' decisions and fitness functions show in the system's model beside its
+own, read-only, in Studio, in the MCP server the agents use, and in `radical check`. Their elements carry the
+origin `standards@<commit>`, so nobody edits them there.
+
+The standards do not know who follows them. The system takes a decision on in its own model, with a relation
+`constrains` from the ADR to its services: *Services talk over HTTP* constrains all five services, for example.
+From then on that decision is measured for those services.
+
+The Warehouse and the Shop have no model of their own, and no `deps.json`. They are judged on their part of the
+architecture's model, which brings the standards with it.
+
+### 2. In every Gate of the Warehouse and the Shop
+
+Each of them calls [`gate.yml`](.github/workflows/gate.yml) from its `ci.yml`, at the same tag:
+
+```yaml
+uses: radicaltools/radical.sdlc.demo.standards/.github/workflows/gate.yml@v2.3.0
+```
+
+The Gate is the one required check of a pull request, and no AI runs in it. On the repository's checkout it:
+
+1. Fetches the model at the commit the code has reached, and this repository at the tag the model pins, into
+   `.standards/` (the repository's `tools/standards.mjs`). It fails when the workflows name another tag than the model.
+2. Installs Node and the packages ([`setup`](.github/actions/setup/action.yml)), then runs the type check and the tests,
+   writing their reports.
+3. Runs the sensors of every fitness function triggered on a pull request (`radical sense run`). A fitness function
+   runs once for each element its ADR constrains and the repository builds; the repository's `.radical/sensors/sensors.json`
+   says which command is which sensor: `node .standards/sensors/boundaries.mjs` for the standards' ones, its own for
+   the rest.
+4. Checks that every commit of an agent stayed in that agent's scope ([`agent-scope.mjs`](pipeline/tools/agent-scope.mjs)).
+5. Runs `radical check` on the repository's part of the model: every requirement has a scenario with a test that
+   passed, and every fitness function's condition holds on what the sensors measured. One that does not, a
+   standard's among them, turns the pull request red.
+
+When a Gate is red, a person can give the pull request the label `agent:fix`: the Warehouse and the Shop call
+[`model-and-code.yml`](.github/workflows/model-and-code.yml) at the same tag, and its coding agent fixes the code on
+that branch, without weakening a test.
+
+### 3. In the agents
+
+The agents are skills of Claude Code, in [`pipeline/skills`](pipeline/skills), copied into each repository's
+`.claude/skills/` by `tools/standards.mjs`. [`run-agent.mjs`](pipeline/tools/run-agent.mjs) runs one headless
+(`claude -p`), with Claude Haiku unless `AGENT_MODEL` says otherwise, and with the allow-list of
+[`agents.mjs`](pipeline/tools/agents.mjs):
+
+| Agent | May change | May not |
+|---|---|---|
+| model agent | the model, through the MCP server | code, tests, the model's settings |
+| coding agent | `services/`, `packages/`, `tests/`, the test bindings in `.radical/radical.json`, findings | the model, the sensors, the workflows, npm packages |
+
+The agents hold no credentials. The workflows commit for them under their names ([`commit-as.sh`](pipeline/tools/commit-as.sh)),
+and the Gate's scope check reads those names. Only a ticket of someone with write access starts an agent, and the
+brief holds only what such people said on it ([`questions.mjs`](pipeline/tools/questions.mjs)).
+
+The architecture repository runs the model agent on the whole system's model, and the coding agents on each
+repository's branch of a change. It takes the skills and tools from here and adds what the demo needs on top: the
+model agent's skill is told that the model is the whole system, a review agent reads its change against the ticket,
+and each agent says what became of its run in a JSON shape. That is its own code, in its `pipeline/`.
+
+### 4. A new version
+
+1. A change merges here, and gets a tag.
+2. The system moves to it in one change: the tag in the architecture's `deps.json`, and in the Warehouse's and the
+   Shop's `ci.yml` and `model-and-code.yml`. Each Gate fails while the two differ.
+3. Each Gate then runs against the new version: new decisions, sensors, Gate and agents. Green means the system
+   follows them. Red shows which service does not, before anything merges.
+
+Nothing runs here when a tag is made, and nothing here lists who uses it.
 
 ## What is here
 
 ```
-.radical/model/          the decisions and their fitness functions
-sensors/                 what measures them, run in the repository of the system measured
-pipeline/tools/          what the workflows run: allow-lists, scope check, rounds, findings
-pipeline/skills/         the agents
-pipeline/callers/        the few lines a repository calls the pipeline with
-.github/workflows/       the pipeline, as reusable workflows, and this repository's own gate
+.radical/model/          the four decisions and their fitness functions
+sensors/                 what measures them, run in the repository that builds the element
+pipeline/skills/         the agents: model, coding, testing, explore
+pipeline/tools/          what the workflows run: run-agent, allow-lists, scope check, briefs, commits
+pipeline/callers/        the few lines a repository calls a workflow with
+.github/workflows/       the pipeline, as reusable workflows, and this repository's own Gate (ci.yml)
 ```
 
-| Decision | Fitness function | Sensor |
-|---|---|---|
-| Services talk over HTTP | Services stay on their own | `boundaries` |
-| APIs described in OpenAPI | API matches its description | `openapi` |
-| Retried writes change nothing | Repeated write changes nothing | `idempotency` |
-| Rules hold under any sequence | Rules hold in random sequences | `fuzz` |
+This repository's own Gate runs the tests of the pipeline and of the sensors, and checks its model.
 
-## How a standard reaches a system
+## Here, and not used by the demo yet
 
-The standards' model says what holds. It does not know who follows it. A system takes it on in **its
-own** model: a relation `constrains` from the ADR to its services. From then on `radical sense run`
-in that system's Gate measures the fitness function once per service, with the sensor at the version
-the system pins, and `radical check` fails that system's pull request if it does not hold.
+These are ready for a system to call, and the demo does not: the testing agent ([`testing-agent.yml`](.github/workflows/testing-agent.yml)),
+the nightly measures, fuzzing and exploratory agents ([`nightly.yml`](.github/workflows/nightly.yml)), deployment
+([`deploy.yml`](.github/workflows/deploy.yml)), and, for systems that keep a model in each repository, pin updates
+([`update-pins.yml`](.github/workflows/update-pins.yml)), handing work to another repository and waiting for it
+([`waiting-tickets.yml`](.github/workflows/waiting-tickets.yml)), and a loop per repository
+([`reconcile.yml`](.github/workflows/reconcile.yml)). The fitness function *Rules hold in random sequences* runs only at night,
+so in the demo it is not measured.
 
-So the same fitness function has a different answer per system, and the answer is in the system's
-own pull request, in front of the team that can fix it.
+## Use it in your own account
 
-## How a new version travels
-
-![A person tags the standards, and nothing runs. Every day the Warehouse and the Shop each look at the tags of what they depend on. A new one becomes a pull request in that repository, with what changed in the model, and its Gate checks the repository against the new version. Each team merges when it can. A tag of the Warehouse reaches the Shop the same way.](docs/new-version.svg)
-
-**This repository does not know who uses it.** There is no list of them anywhere, and a tag runs nothing here. A repository
-that depends on another declares it in its own `deps.json`, and looks for new versions itself.
-
-1. A change merges here and gets a tag, `v1.1.0`.
-2. Every day, or by hand, each of the Warehouse and the Shop runs its `pins.yml`, which calls
-   [`update-pins.yml`](.github/workflows/update-pins.yml). It reads the tags of each repository in `deps.json`.
-3. A newer version becomes a pull request there: the pin in `deps.json` moves, and so does the version in its workflows,
-   which `tools/standards.mjs --check` in its Gate keeps equal. A newer tag moves the open pull request along.
-4. The text of the pull request says what changed in the model of the dependency, from `radical diff` between the two tags.
-   A decision whose text changed leaves the Gate green, because the Gate reads what is measured, so a person reads this.
-5. Each repository's Gate runs against the new version: the new decisions, the new sensors, the new pipeline. Green means it
-   holds. Red shows exactly which service does not, before anything merged.
-6. A person merges. The pins can differ for a while, so a team moves when it can. When the Shop reads a Warehouse pinned at
-   another version of the standards, its own pin wins, and the check says so.
-
-The Warehouse's tags reach the Shop the same way, with its OpenAPI descriptions and images. The price is the wait, a day at
-most, and starting the workflow by hand ends it. GitHub stops the schedule of a public repository with no activity for 60 days.
-
-## The pipeline
-
-The workflows here have `workflow_call`, and run in the repository that calls them, on its checkout, with
-`.standards/` at the version it pins. It is the pipeline of the demo's first version, with one change: it exists once.
-
-A ticket goes in at the top and a deployed commit comes out, and a person acts twice: by giving
-the label and by merging. This is what happens in the Warehouse and in the Shop. Each box names the
-part of Radical it uses.
-
-### During the day
-
-![The whole flow by role: a person opens a ticket, the model agent changes the model and asks if the ticket is unclear, the coding agent builds from get_changes, the Gate decides, the testing agent proposes tests, the pull request is marked ready, a person merges, and it deploys.](docs/sdlc-day.svg)
-
-### Every night
-
-![The night by role: the sensors and the fuzz file measure, an agent per area explores, each finding runs again without the agent, the findings are proposed, a person merges them and starts the agents on one.](docs/sdlc-night.svg)
-
-Yellow is a person, violet an agent on Claude Code, green has no AI and gives the same answer
-every time. The box that stands out is the Gate, the one required check.
-
-At night each part a repository builds gets an agent of its own: the areas come from the model, one for each element
-`.radical/radical.json` maps that has requirements, and name those requirements. A new service gets its agent with nothing to
-configure, and the brief names what changed in the model since the night before.
-
-### The workflows
-
-| Workflow | Starts on | AI | What it does |
-|---|---|---|---|
-| [`gate.yml`](.github/workflows/gate.yml) | every pull request | no | **Gate**, the one required check. Also comments what changed in the model. |
-| [`model-and-code.yml`](.github/workflows/model-and-code.yml) | label `agent:implement` on an issue, `agent:fix` on a pull request, or by hand on a finding | yes | The model agent writes the model, the coding agent implements it. Also fixes a red pull request. |
-| [`testing-agent.yml`](.github/workflows/testing-agent.yml) | a pull request changing the model or a service | yes | Proposes the missing tests in a pull request into that branch. |
-| [`nightly.yml`](.github/workflows/nightly.yml) | every night | sensors and fuzz no, explore agents yes | Measures, fuzzes on a random seed, explores, and proposes findings on one rolling branch. |
-| [`prepare-for-review.yml`](.github/workflows/prepare-for-review.yml) | the gate or the testing agent ending | no | With `AGENT_AUTOMATION`: merges a green proposal into its branch, marks a finished pull request ready for review. |
-| [`deploy.yml`](.github/workflows/deploy.yml) | a commit on main, a version tag | no | Starts the stack on the runner, smoke-tests it, then publishes the images. |
-| [`update-pins.yml`](.github/workflows/update-pins.yml) | every day, or by hand | no | Finds new versions of what the repository depends on, and opens a pull request for each. |
-| [`reconcile.yml`](.github/workflows/reconcile.yml) | the model or `.radical/reconciled.json` changing on main, every day, or by hand | the coding agent, when there is a gap | Only in a repository with `.radical/reconciled.json`. Reads the gap between the model and the code, and proposes the code or tells a person why not. |
-
-### The model as the state wanted
-
-A repository with `.radical/reconciled.json` works the other way round, as a trial in the Warehouse. The model on `main` is what
-the system should be, and that file names the commit of the model the code has reached, so the gap is `radical diff` between
-the two. A ticket ends in a pull request of the model alone. Once a person merges it, `reconcile.yml` sees the gap and the coding
-agent proposes the code, which a person merges too. Each version of the model gets one try: one pull request, or one ticket with
-the label `agent:stuck`. A ticket stays open until the code is in. When the code needs another system, the agent hands the work on
-and a ticket with the label `agent:waiting` says so. A pin reaching main changes the model, so the loop tries again with nothing to wake
-it, and that ticket closes with the code. A tag means the code has reached the model, and `deploy.yml` fails on a tag where it has not, so a
-consumer pinning tags sees only what works.
-
-How the agents are kept honest: the model
-and the code have separate authors, no AI runs in the Gate, the agents hold no credentials and work from
-an allow-list, and only someone with write access starts them.
-
-## Limits of this demo
-
-- **A system is one repository here.** Radical cannot yet place a container of one repository inside a
-  system of another's model, so a system split over several repositories is left out.
-- A company with a landscape of its own would keep it in a repository of its own. Here the Shop draws it,
-  because it is the one that depends on the other two.
-
-## Set it up in your own account
-
-Fork all three, in this order, and rename `radicaltools` in `deps.json`, the workflows and `docker-compose.yml`. Then, in each repository:
-
-```bash
-npm ci
-pipeline/setup-github.sh <owner>/<name> Gate       # here
-.standards/pipeline/setup-github.sh <owner>/<name> "checks / Gate"   # in a system, after npm run standards
-```
-
-The script asks for `ANTHROPIC_API_KEY`, from the [Claude Console](https://platform.claude.com), and `AGENT_TOKEN`, a fine-grained
-token on that repository alone with Contents, Pull requests, Issues and Workflows: read and write. It also offers
-`DELEGATE_TOKEN`, for a repository that depends on another system: a token on those repositories with Issues: read and write,
-Contents and Pull requests: read, whose owner has write access there. That is the one thing a repository writes to another: tickets, towards what it
-depends on. Without it, the agents ask a person instead. Tag
-the standards first, and the Warehouse before the Shop, because the Shop's deploy runs the Warehouse's images.
-
-Those images are private, as a company's would be. After the Warehouse's first deploy, open the settings of its
-packages `stock` and `dispatch` on GitHub, and under **Manage Actions access** add the Shop's repository with the role
-Read. The token of the Shop's workflow can then pull them, and nobody else can.
+Fork this repository and the demo's three, replace `radicaltools` in the architecture's `deps.json` and
+`.radical/system.json` and in every repository's workflows and `.radical/radical.json`, and tag this one first.
+[`pipeline/setup-github.sh`](pipeline/setup-github.sh) creates a repository on GitHub with its labels, its secrets
+(`ANTHROPIC_API_KEY` from the [Claude Console](https://platform.claude.com), and `AGENT_TOKEN`, a fine-grained token on
+the demo's repositories with Contents, Pull requests, Issues and Actions: read and write) and the rule that its main
+branch takes changes only through a pull request with a green Gate.
