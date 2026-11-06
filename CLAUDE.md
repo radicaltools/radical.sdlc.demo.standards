@@ -1,4 +1,4 @@
-# radical.tools.sdlc.demo.2.standards
+# radical.sdlc.demo.standards
 
 The company's standards: what every system follows, how each is measured, and the pipeline they
 share. README.md says how the three repositories fit together.

@@ -17,5 +17,5 @@ permissions:
 
 jobs:
   prepare:
-    uses: radicaltools/radical.tools.sdlc.demo.2.standards/.github/workflows/prepare-for-review.yml@v1.0.6
+    uses: radicaltools/radical.sdlc.demo.standards/.github/workflows/prepare-for-review.yml@v1.0.6
     secrets: inherit
