@@ -1,5 +1,5 @@
 {
-  "name": "radical.tools.sdlc.demo.2.standards",
+  "name": "radical.sdlc.demo.standards",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -17,5 +17,5 @@
     "test": "vitest run",
     "test:reports": "vitest run --reporter=default --reporter=json --outputFile.json=reports/unit.json"
   },
-  "description": "The company's standards in radical.tools.sdlc.demo.2: the decisions every system follows, how each is measured, and the delivery pipeline the systems share."
+  "description": "The company's standards in radical.sdlc.demo: the decisions every system follows, how each is measured, and the delivery pipeline the systems share."
 }

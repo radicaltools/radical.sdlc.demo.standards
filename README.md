@@ -1,15 +1,19 @@
-# radical.tools.sdlc.demo.2.standards
+# radical.sdlc.demo.standards
 
-Part of a demo: **one company, three repositories, one architecture model joined by federation,
-and a delivery pipeline on GitHub where agents propose and deterministic checks decide.**
-[radical.tools.sdlc.demo.1](https://github.com/radicaltools/radical.tools.sdlc.demo.1) shows the
-pipeline on one monorepo. This one shows what changes when there are several teams.
+The company's standards in **radical.sdlc.demo**: the decisions every system follows, how each is
+measured, and the delivery pipeline on GitHub where agents propose and deterministic checks decide.
+The demo builds one system in several repositories, with one model:
 
-| Repository | What it holds | Depends on |
+| Repository | What it holds | Uses the standards |
 |---|---|---|
-| **standards** (this one) | The decisions every system follows, how each is measured, the pipeline | nothing |
-| [warehouse](https://github.com/radicaltools/radical.tools.sdlc.demo.2.warehouse) | The Warehouse: stock, reservations, dispatch | standards |
-| [shop](https://github.com/radicaltools/radical.tools.sdlc.demo.2.shop) | The Shop: prices, orders, notifications | standards, warehouse |
+| **standards** (this one) | The decisions every system follows, how each is measured, the pipeline | — |
+| [architecture](https://github.com/radicaltools/radical.sdlc.demo.architecture) | The one model of the whole system, and the loop that brings the code to it | its model depends on this one's (`deps.json`), read-only |
+| [warehouse](https://github.com/radicaltools/radical.sdlc.demo.warehouse) | The Warehouse: stock, reservations, dispatch | the Gate, the sensors and the agents' skills, at a pinned version |
+| [shop](https://github.com/radicaltools/radical.sdlc.demo.shop) | The Shop: prices, orders, notifications | the same |
+
+How a change goes through it is in [the architecture repository](https://github.com/radicaltools/radical.sdlc.demo.architecture#how-a-change-gets-through).
+The rest of this README describes what this repository offers on its own, also for systems that keep a
+model in each repository and join them by federation, which is how the demo started.
 
 Each repository keeps the model of what it builds. Its `.radical/model/deps.json` names the models
 it depends on, each at a version, and every tool shows them beside its own, read-only: Studio, the
@@ -74,7 +78,7 @@ most, and starting the workflow by hand ends it. GitHub stops the schedule of a 
 ## The pipeline
 
 The workflows here have `workflow_call`, and run in the repository that calls them, on its checkout, with
-`.standards/` at the version it pins. It is demo.1's pipeline with one change: it exists once.
+`.standards/` at the version it pins. It is the pipeline of the demo's first version, with one change: it exists once.
 
 A ticket goes in at the top and a deployed commit comes out, and a person acts twice: by giving
 the label and by merging. This is what happens in the Warehouse and in the Shop. Each box names the
@@ -119,8 +123,7 @@ and a ticket with the label `agent:waiting` says so. A pin reaching main changes
 it, and that ticket closes with the code. A tag means the code has reached the model, and `deploy.yml` fails on a tag where it has not, so a
 consumer pinning tags sees only what works.
 
-How the agents are kept honest is the same as in
-[demo.1](https://github.com/radicaltools/radical.tools.sdlc.demo.1#how-the-agents-are-kept-honest): the model
+How the agents are kept honest: the model
 and the code have separate authors, no AI runs in the Gate, the agents hold no credentials and work from
 an allow-list, and only someone with write access starts them.
 

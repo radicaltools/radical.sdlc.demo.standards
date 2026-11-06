@@ -20,5 +20,5 @@ permissions:
 
 jobs:
   waiting:
-    uses: radicaltools/radical.tools.sdlc.demo.2.standards/.github/workflows/waiting-tickets.yml@v2.1.0
+    uses: radicaltools/radical.sdlc.demo.standards/.github/workflows/waiting-tickets.yml@v2.1.0
     secrets: inherit
